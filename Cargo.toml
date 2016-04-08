@@ -1,0 +1,11 @@
+[package]
+name = "once"
+version = "0.3.4"
+authors = ["Philipp Oppermann <dev@phil-opp.com>"]
+license = "Apache-2.0/MIT"
+
+description = "This crate provides an assert_has_not_been_called! macro that panics if the surrounding function is called twice. Useful for initialization functions."
+keywords = ["once", "called", "no_std"]
+
+repository = "https://github.com/phil-opp/rust-once"
+documentation = "https://phil-opp.rustdocs.org/once/index.html"
