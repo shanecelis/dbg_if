@@ -93,12 +93,10 @@ macro_rules! dbg_if_changed {
             match HASH.fetch_update(Ordering::SeqCst, Ordering::SeqCst, |h| (h != current_hash).then_some(current_hash)) {
                 Ok(_) => {
                     // It has changed.
-                    // eprintln!("changed");
                     std::dbg!($($arg)+)
                 }
                 Err(_) => {
                     // It has not changed.
-                    // eprintln!("not changed");
                     $($arg)+
                 }
             }
@@ -161,10 +159,22 @@ mod test {
 
             let output = strip_dbg(capture_stderr(|| {
                 f(1);
-                f(1);
                 f(2);
             }));
             assert_eq!(&output[..], "x = 1\nx = 2");
+        }
+
+        #[test]
+        fn test_dbg_if_changed_eval_once() {
+            fn f(x: &mut usize) {
+                dbg_if_changed!({ *x += 1; *x });
+            }
+
+            let output = strip_dbg(capture_stderr(|| {
+                let mut x: usize = 0;
+                f(&mut x);
+            }));
+            assert_eq!(&output[..], "{ *x += 1; *x } = 1");
         }
 
         #[test]

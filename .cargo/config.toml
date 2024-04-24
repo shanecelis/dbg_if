@@ -1,2 +1,2 @@
 [alias]
-tt = "test --features std -- --nocapture --test-threads=1"
+tt = "test --features std -- --test-threads=1 --nocapture"
