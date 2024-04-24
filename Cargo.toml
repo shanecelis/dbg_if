@@ -9,3 +9,13 @@ keywords = ["once", "called", "no_std"]
 
 repository = "https://github.com/phil-opp/rust-once"
 documentation = "https://phil-opp.rustdocs.org/once/index.html"
+edition = "2021"
+
+
+[features]
+default = ["std"]
+std = []
+
+[dev-dependencies]
+gag = "1.0.0"
+regex = "1.10.4"

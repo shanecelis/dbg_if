@@ -1,6 +1,6 @@
-#![no_std]
+#![cfg_attr(not(feature = "std"), no_std)]
 
-#[cfg(test)]
+#[cfg(all(test, not(feature = "std")))]
 extern crate std;
 
 // Re-export libcore using an alias so that the macros can work in no_std
@@ -20,9 +20,9 @@ Using the macro:
 extern crate once;
 
 fn init() {
-    assert_has_not_been_called!();
+assert_has_not_been_called!();
 
-    // code that should only run once
+// code that should only run once
 }
 
 fn main() {
@@ -79,23 +79,41 @@ macro_rules! dbg_once {
     }};
 }
 
-
+#[macro_export]
 macro_rules! dbg_if_changed {
     ($($arg:tt)*) => {{
         {
-            use $crate::__core::sync::atomic::{AtomicUsize, Ordering};
+            use $crate::__core::{hash::{Hash, Hasher}, sync::atomic::{AtomicUsize, Ordering}};
             static HASH: AtomicUsize = AtomicUsize::new(0);
-            HASH.fetch_update(Ordering::SeqCst, Ordering::SeqCst, |h| h ==
-            let hash = HASH.swap(true, Ordering::Relaxed);
-            if !hash {
-                std::dbg!($($arg)+)
-            } else {
-                $($arg)+
+            let mut s = std::hash::DefaultHasher::new();
+            let value = $($arg)+;
+            value.hash(&mut s);
+            // let current_hash = std::dbg!(s.finish() as usize);
+            let current_hash = s.finish() as usize;
+            match HASH.fetch_update(Ordering::SeqCst, Ordering::SeqCst, |h| (h != current_hash).then_some(current_hash)) {
+                Ok(_) => {
+                    // It has changed.
+                    // eprintln!("changed");
+                    std::dbg!($($arg)+)
+                }
+                Err(_) => {
+                    // It has not changed.
+                    // eprintln!("not changed");
+                    $($arg)+
+                }
             }
         }
     }};
 }
 
+#[cfg(test)]
+mod test {
+
+    mod test_dbg {
+    use std::borrow::Cow;
+    use std::io::Read;
+    use gag::BufferRedirect;
+    use regex::Regex;
 #[test]
 fn test_run_once() {
     fn init() {
@@ -104,24 +122,54 @@ fn test_run_once() {
     init();
 }
 
+    fn capture_stderr<F: FnOnce()>(f: F) -> String {
+        let mut buf = BufferRedirect::stderr().unwrap();
+        f();
+        let mut output = String::new();
+        buf.read_to_string(&mut output).unwrap();
+        output
+    }
+
+    fn strip_dbg(input: &str) -> Cow<'_, str> {
+        let r = Regex::new("\\[.*\\]").unwrap();
+        r.replace_all(&input.trim(), "[...]")
+    }
+
 
 #[test]
-fn test_run_twice() {
-    fn init() {
+fn test_dbg_once() {
+    fn f() {
         dbg_once!("hi");
     }
-    init();
-    init();
+    let output = capture_stderr(|| {
+                   f();
+                   f();
+    });
+
+    let output = strip_dbg(&output);
+    assert_eq!(&output[..], "[...] \"hi\" = \"hi\"");
+}
+
+#[test]
+fn test_dbg_if_changed() {
+    fn f(x: usize) {
+        dbg_if_changed!(x);
+    }
+    f(1);
+    f(1);
+    f(2);
 }
 
 #[test]
 fn test_pass_thru() {
     fn a() {
-        let x: usize = dbg_once!(1);
+        let _x: usize = dbg_once!(1);
     }
     a();
     a();
 }
+
+    }
 
 #[test]
 fn test_run_once_different_fns() {
@@ -165,4 +213,5 @@ fn test_hygiene2() {
         static CALLED: i32 = 42;
     }
     init();
+}
 }
