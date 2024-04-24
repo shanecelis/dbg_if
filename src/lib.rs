@@ -63,12 +63,64 @@ macro_rules! assert_has_not_been_called {
     }};
 }
 
+#[macro_export]
+macro_rules! dbg_once {
+    ($($arg:tt)*) => {{
+        {
+            use $crate::__core::sync::atomic::{AtomicBool, Ordering};
+            static CALLED: AtomicBool = AtomicBool::new(false);
+            let called = CALLED.swap(true, Ordering::Relaxed);
+            if !called {
+                std::dbg!($($arg)+)
+            } else {
+                $($arg)+
+            }
+        }
+    }};
+}
+
+
+macro_rules! dbg_if_changed {
+    ($($arg:tt)*) => {{
+        {
+            use $crate::__core::sync::atomic::{AtomicUsize, Ordering};
+            static HASH: AtomicUsize = AtomicUsize::new(0);
+            HASH.fetch_update(Ordering::SeqCst, Ordering::SeqCst, |h| h ==
+            let hash = HASH.swap(true, Ordering::Relaxed);
+            if !hash {
+                std::dbg!($($arg)+)
+            } else {
+                $($arg)+
+            }
+        }
+    }};
+}
+
 #[test]
 fn test_run_once() {
     fn init() {
-        assert_has_not_been_called!();
+        dbg_once!("hi");
     }
     init();
+}
+
+
+#[test]
+fn test_run_twice() {
+    fn init() {
+        dbg_once!("hi");
+    }
+    init();
+    init();
+}
+
+#[test]
+fn test_pass_thru() {
+    fn a() {
+        let x: usize = dbg_once!(1);
+    }
+    a();
+    a();
 }
 
 #[test]
