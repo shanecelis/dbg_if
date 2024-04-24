@@ -109,18 +109,12 @@ macro_rules! dbg_if_changed {
 #[cfg(test)]
 mod test {
 
+    #[cfg(feature = "std")]
     mod test_dbg {
-        use std::borrow::Cow;
+        // use std::borrow::Cow;
         use std::io::Read;
         use gag::BufferRedirect;
         use regex::Regex;
-        #[test]
-        fn test_run_once() {
-            fn init() {
-                dbg_once!("hi");
-            }
-            init();
-        }
 
         fn capture_stderr<F: FnOnce()>(f: F) -> String {
             let mut buf = BufferRedirect::stderr().unwrap();
@@ -130,24 +124,33 @@ mod test {
             output
         }
 
-        fn strip_dbg(input: &str) -> Cow<'_, str> {
-            let r = Regex::new("\\[.*\\]").unwrap();
-            r.replace_all(&input.trim(), "[...]")
+        fn strip_dbg(input: String) -> String {
+            let r = Regex::new("\\[.*\\] ").unwrap();
+            // r.replace_all(&input.trim(), "[...]").to_string()
+            r.replace_all(&input.trim(), "").to_string()
         }
 
+        #[test]
+        fn test_run_once() {
+            fn f() {
+                dbg_once!("hi");
+            }
+            let output = strip_dbg(capture_stderr(|| {
+                f();
+            }));
+            assert_eq!(&output[..], "\"hi\" = \"hi\"");
+        }
 
         #[test]
         fn test_dbg_once() {
             fn f() {
                 dbg_once!("hi");
             }
-            let output = capture_stderr(|| {
+            let output = strip_dbg(capture_stderr(|| {
                 f();
                 f();
-            });
-
-            let output = strip_dbg(&output);
-            assert_eq!(&output[..], "[...] \"hi\" = \"hi\"");
+            }));
+            assert_eq!(&output[..], "\"hi\" = \"hi\"");
         }
 
         #[test]
@@ -155,9 +158,13 @@ mod test {
             fn f(x: usize) {
                 dbg_if_changed!(x);
             }
-            f(1);
-            f(1);
-            f(2);
+
+            let output = strip_dbg(capture_stderr(|| {
+                f(1);
+                f(1);
+                f(2);
+            }));
+            assert_eq!(&output[..], "x = 1\nx = 2");
         }
 
         #[test]
@@ -165,8 +172,12 @@ mod test {
             fn a() {
                 let _x: usize = dbg_once!(1);
             }
-            a();
-            a();
+
+            let output = strip_dbg(capture_stderr(|| {
+                a();
+                a();
+            }));
+            assert_eq!(&output[..], "1 = 1");
         }
 
     }
