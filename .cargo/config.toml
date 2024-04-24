@@ -1,0 +1,2 @@
+[alias]
+tt = "test --features std -- --nocapture --test-threads=1"
