@@ -63,6 +63,7 @@ macro_rules! assert_has_not_been_called {
     }};
 }
 
+#[cfg(feature = "std")]
 #[macro_export]
 macro_rules! dbg_once {
     ($($arg:tt)*) => {{
@@ -80,7 +81,7 @@ macro_rules! dbg_once {
 }
 
 #[macro_export]
-macro_rules! dbg_if_changed {
+macro_rules! dbg_if_changed_old {
     ($($arg:tt)*) => {{
         {
             use $crate::__core::{hash::{Hash, Hasher}, sync::atomic::{AtomicUsize, Ordering}};
@@ -103,6 +104,72 @@ macro_rules! dbg_if_changed {
         }
     }};
 }
+
+#[cfg(feature = "std")]
+#[macro_export]
+macro_rules! dbg_if_changed {
+    // NOTE: We cannot use `concat!` to make a static string as a format argument
+    // of `eprintln!` because `file!` could contain a `{` or
+    // `$val` expression could be a block (`{ .. }`), in which case the `eprintln!`
+    // will be malformed.
+    ($val:expr $(,)?) => {
+        // Use of `match` here is intentional because it affects the lifetimes
+        // of temporaries - https://stackoverflow.com/a/48732525/1063961
+        match $val {
+            tmp => {
+
+            use $crate::__core::{hash::{Hash, Hasher}, sync::atomic::{AtomicUsize, Ordering}};
+            static HASH: AtomicUsize = AtomicUsize::new(0);
+            let mut s = ::std::hash::DefaultHasher::new();
+            tmp.hash(&mut s);
+            // let current_hash = std::dbg!(s.finish() as usize);
+            let current_hash = s.finish() as usize;
+            if HASH.fetch_update(Ordering::SeqCst, Ordering::SeqCst, |h| (h != current_hash).then_some(current_hash)).is_ok() {
+               ::std::eprintln!("[{}:{}:{}] {} = {:#?}",
+                    ::std::file!(), ::std::line!(), ::std::column!(), ::std::stringify!($val), &tmp);
+            }
+            tmp
+        }
+        }
+    };
+    ($($val:expr),+ $(,)?) => {
+        ($($crate::dbg_if_changed!($val)),+,)
+    };
+}
+
+#[cfg(feature = "std")]
+#[macro_export]
+macro_rules! dbg_if_ne {
+    // NOTE: We cannot use `concat!` to make a static string as a format argument
+    // of `eprintln!` because `file!` could contain a `{` or
+    // `$val` expression could be a block (`{ .. }`), in which case the `eprintln!`
+    // will be malformed.
+    ($val:expr $(,)?, $tol:expr) => {
+        // Use of `match` here is intentional because it affects the lifetimes
+        // of temporaries - https://stackoverflow.com/a/48732525/1063961
+        match $val {
+            tmp => {
+
+            use $crate::__core::sync::atomic::{AtomicIsize, Ordering};
+            static VALUE: AtomicIsize = AtomicIsize::new(0);
+            let new_value: isize = (tmp / $tol).try_into().expect("Can't make isize");
+            if VALUE.fetch_update(Ordering::SeqCst, Ordering::SeqCst, |v| (v != new_value).then_some(new_value)).is_ok() {
+               ::std::eprintln!("[{}:{}:{}] {} = {:#?}",
+                    ::std::file!(), ::std::line!(), ::std::column!(), ::std::stringify!($val), &tmp);
+            }
+            tmp
+        }
+        }
+    };
+
+    ($val:expr $(,)?) => {
+         $crate::dbg_if_ne!($val, 1)
+    };
+    // ($($val:expr),+ $(,)?) => {
+    //     ($($crate::dbg_if_changed!($val)),+,)
+    // };
+}
+
 
 #[cfg(test)]
 mod test {
@@ -175,6 +242,22 @@ mod test {
                 f(&mut x);
             }));
             assert_eq!(&output[..], "{ *x += 1; *x } = 1");
+        }
+
+        #[test]
+        fn test_dbg_if_ne() {
+            fn f(x: usize) {
+                dbg_if_ne!(x);
+            }
+
+            let output = strip_dbg(capture_stderr(|| {
+                let mut x: usize = 1;
+                f(x);
+                f(x);
+                x += 1;
+                f(x);
+            }));
+            assert_eq!(&output[..], "x = 1\nx = 2");
         }
 
         #[test]
