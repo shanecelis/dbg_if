@@ -110,108 +110,108 @@ macro_rules! dbg_if_changed {
 mod test {
 
     mod test_dbg {
-    use std::borrow::Cow;
-    use std::io::Read;
-    use gag::BufferRedirect;
-    use regex::Regex;
-#[test]
-fn test_run_once() {
-    fn init() {
-        dbg_once!("hi");
+        use std::borrow::Cow;
+        use std::io::Read;
+        use gag::BufferRedirect;
+        use regex::Regex;
+        #[test]
+        fn test_run_once() {
+            fn init() {
+                dbg_once!("hi");
+            }
+            init();
+        }
+
+        fn capture_stderr<F: FnOnce()>(f: F) -> String {
+            let mut buf = BufferRedirect::stderr().unwrap();
+            f();
+            let mut output = String::new();
+            buf.read_to_string(&mut output).unwrap();
+            output
+        }
+
+        fn strip_dbg(input: &str) -> Cow<'_, str> {
+            let r = Regex::new("\\[.*\\]").unwrap();
+            r.replace_all(&input.trim(), "[...]")
+        }
+
+
+        #[test]
+        fn test_dbg_once() {
+            fn f() {
+                dbg_once!("hi");
+            }
+            let output = capture_stderr(|| {
+                f();
+                f();
+            });
+
+            let output = strip_dbg(&output);
+            assert_eq!(&output[..], "[...] \"hi\" = \"hi\"");
+        }
+
+        #[test]
+        fn test_dbg_if_changed() {
+            fn f(x: usize) {
+                dbg_if_changed!(x);
+            }
+            f(1);
+            f(1);
+            f(2);
+        }
+
+        #[test]
+        fn test_pass_thru() {
+            fn a() {
+                let _x: usize = dbg_once!(1);
+            }
+            a();
+            a();
+        }
+
     }
-    init();
-}
 
-    fn capture_stderr<F: FnOnce()>(f: F) -> String {
-        let mut buf = BufferRedirect::stderr().unwrap();
-        f();
-        let mut output = String::new();
-        buf.read_to_string(&mut output).unwrap();
-        output
+    #[test]
+    fn test_run_once_different_fns() {
+        fn init1() {
+            assert_has_not_been_called!();
+        }
+        fn init2() {
+            assert_has_not_been_called!();
+        }
+        init1();
+        init2();
     }
 
-    fn strip_dbg(input: &str) -> Cow<'_, str> {
-        let r = Regex::new("\\[.*\\]").unwrap();
-        r.replace_all(&input.trim(), "[...]")
+    #[test]
+    #[should_panic]
+    fn test_run_twice() {
+        fn init() {
+            assert_has_not_been_called!();
+        }
+        init();
+        init();
     }
 
+    #[test]
+    fn test_hygiene1() {
+        fn init() {
+            assert_has_not_been_called!();
 
-#[test]
-fn test_dbg_once() {
-    fn f() {
-        dbg_once!("hi");
-    }
-    let output = capture_stderr(|| {
-                   f();
-                   f();
-    });
-
-    let output = strip_dbg(&output);
-    assert_eq!(&output[..], "[...] \"hi\" = \"hi\"");
-}
-
-#[test]
-fn test_dbg_if_changed() {
-    fn f(x: usize) {
-        dbg_if_changed!(x);
-    }
-    f(1);
-    f(1);
-    f(2);
-}
-
-#[test]
-fn test_pass_thru() {
-    fn a() {
-        let _x: usize = dbg_once!(1);
-    }
-    a();
-    a();
-}
-
+            #[allow(dead_code)]
+            fn assert_has_not_been_called() {}
+        }
+        init();
     }
 
-#[test]
-fn test_run_once_different_fns() {
-    fn init1() {
-        assert_has_not_been_called!();
-    }
-    fn init2() {
-        assert_has_not_been_called!();
-    }
-    init1();
-    init2();
-}
+    #[test]
+    fn test_hygiene2() {
+        fn init() {
+            assert_has_not_been_called!();
 
-#[test]
-#[should_panic]
-fn test_run_twice() {
-    fn init() {
-        assert_has_not_been_called!();
+            #[allow(dead_code)]
+            static CALLED: i32 = 42;
+        }
+        init();
     }
-    init();
-    init();
-}
-
-#[test]
-fn test_hygiene1() {
-    fn init() {
-        assert_has_not_been_called!();
-
-        #[allow(dead_code)]
-        fn assert_has_not_been_called() {}
-    }
-    init();
-}
-
-#[test]
-fn test_hygiene2() {
-    fn init() {
-        assert_has_not_been_called!();
-
-        #[allow(dead_code)]
-        static CALLED: i32 = 42;
-    }
-    init();
-}
 }
