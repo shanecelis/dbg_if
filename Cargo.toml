@@ -19,3 +19,6 @@ std = []
 [dev-dependencies]
 gag = "1.0.0"
 regex = "1.10.4"
+
+[dependencies]
+approx = "0.5.1"
