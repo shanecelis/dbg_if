@@ -68,3 +68,12 @@ This crate is licensed, at your option, under either the
 Unless you explicitly state otherwise, any contribution intentionally submitted
 for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
 dual licensed as above, without any additional terms or conditions.
+
+## Acknowledgments
+
+Thank you to [Philipp Oppermann](https://github.com/phil-opp) for his crate
+[`once`](https://github.com/phil-opp/rust-once). I initially thought I'd only
+write `dbg_once!` and submit a PR. But once I got going I realized `dbg_if_ne!`
+would be useful too and these are all require `std`; `once` is a `no_std` crate.
+So `not_again` is inspired and informed by `once` but it actually doesn't share
+any code with `once`.
