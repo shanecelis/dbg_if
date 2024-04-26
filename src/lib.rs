@@ -51,7 +51,8 @@ macro_rules! dbg_if_ne {
             match $val {
                 tmp => {
                     static_atomic!(VALUE: $type);
-                    if VALUE.fetch_update(Ordering::SeqCst, Ordering::SeqCst, |v| (first || $ne(v, tmp)).then_some(tmp)).is_ok() {
+                    let ne_fn = $ne;
+                    if VALUE.fetch_update(Ordering::SeqCst, Ordering::SeqCst, |v| (first || ne_fn(v, tmp)).then_some(tmp)).is_ok() {
                         ::std::eprintln!("[{}:{}:{}] {} = {:#?}",
                                          ::std::file!(), ::std::line!(), ::std::column!(), ::std::stringify!($val), &tmp);
                     }
