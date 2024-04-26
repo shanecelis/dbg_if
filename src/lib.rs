@@ -287,7 +287,7 @@ macro_rules! static_atomic_float {
 macro_rules! static_atomic_float {
     ($name:ident: $type:tt) => {
         compile_error!(
-            "Feature \"float\" must be enabled on \"not_again\" crate to use atomic floats.");
+            "Feature \"float\" must be enabled on \"not_again\" crate to use atomic floats."
+        );
     };
 }
-

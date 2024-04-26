@@ -1,4 +1,3 @@
-
 fn capture_stderr<F: FnOnce()>(f: F) -> String {
     use gag::BufferRedirect;
     use std::io::Read;
@@ -17,8 +16,8 @@ fn strip_dbg(input: String) -> String {
 }
 
 mod test_dbg {
-    use not_again::*;
     use super::*;
+    use not_again::*;
 
     #[test]
     fn test_run_once() {
@@ -117,9 +116,9 @@ mod test_dbg {
 
 #[cfg(feature = "float")]
 mod float_tests {
-    use not_again::*;
     use super::*;
     use approx::relative_eq;
+    use not_again::*;
 
     #[test]
     fn test_approx() {
@@ -222,7 +221,10 @@ mod nocapture {
     fn test_dbg_if_ne_closure() {
         use not_again::dbg_if_ne;
         for i in 0..=20 {
-            dbg_if_ne!(i, i8, |last_value: i8, new_value: i8| (new_value - last_value).abs() >= 10);
+            dbg_if_ne!(i, i8, |last_value: i8, new_value: i8| (new_value
+                - last_value)
+                .abs()
+                >= 10);
         }
         // Outputs: [src/lib.rs:58:9] i = 0
         // Outputs: [src/lib.rs:58:9] i = 10
