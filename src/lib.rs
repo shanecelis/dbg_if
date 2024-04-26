@@ -135,7 +135,7 @@ macro_rules! dbg_if_hash_ne {
 /// ```rust
 /// use not_again::dbg_if_relative_ne;
 /// fn f(x: f32) -> f32 {
-///     dbg_if_relative_ne!(x, f32, epsilon = 1.0)
+///     dbg_if_relative_ne!(x, f32, epsilon = 1.0, max_relative = 0.5)
 /// }
 /// f(1.0); // Outputs: [src/lib.rs:58:9] x = 1.0
 /// f(1.5); // No output.
@@ -209,7 +209,7 @@ macro_rules! dbg_if_abs_diff_ne {
 /// ```rust
 /// use not_again::dbg_if_ulps_ne;
 /// fn f(x: f32) -> f32 {
-///     dbg_if_ulps_ne!(x, f32, epsilon = 1.0)
+///     dbg_if_ulps_ne!(x, f32, epsilon = 1.0, max_ulps = 4)
 /// }
 /// f(1.0); // Outputs: [src/lib.rs:58:9] x = 1.0
 /// f(1.5); // No output.

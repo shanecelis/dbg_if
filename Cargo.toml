@@ -3,7 +3,7 @@ name = "not_again"
 version = "0.1.0"
 authors = ["Shane Celis <shane.celis@gmail.com>"]
 license = "Apache-2.0/MIT"
-description = "dbg! in the loop without terminal woes."
+description = "Use dbg! in the loop without terminal woes."
 keywords = ["once", "debug", "dbg"]
 
 repository = "https://github.com/shanecelis/not_again"
