@@ -229,72 +229,76 @@ mod nocapture {
         // Outputs: [src/lib.rs:58:9] i = 20
     }
 
-    #[test]
-    fn test_dbg_if_relative_ne() {
-        use not_again::dbg_if_relative_ne;
-        fn f(x: f32) -> f32 {
-            dbg_if_relative_ne!(x, f32) + 0.1
-        }
-        f(1.0); // Outputs: [src/lib.rs:58:9] x = 1.0
-        f(1.0); // No output.
-        f(1.1); // Outputs: [src/lib.rs:58:9] x = 1.1
-    }
+    #[cfg(feature = "float")]
+    mod float {
 
-    #[test]
-    fn test_dbg_if_relative_ne_with_args() {
-        use not_again::dbg_if_relative_ne;
-        fn f(x: f32) -> f32 {
-            dbg_if_relative_ne!(x, f32, epsilon = 1.0)
+        #[test]
+        fn test_dbg_if_relative_ne() {
+            use not_again::dbg_if_relative_ne;
+            fn f(x: f32) -> f32 {
+                dbg_if_relative_ne!(x, f32) + 0.1
+            }
+            f(1.0); // Outputs: [src/lib.rs:58:9] x = 1.0
+            f(1.0); // No output.
+            f(1.1); // Outputs: [src/lib.rs:58:9] x = 1.1
         }
-        f(1.0); // Outputs: [src/lib.rs:58:9] x = 1.0
-        f(1.5); // No output.
-        f(2.0); // No output.
-        f(2.1); // Outputs: [src/lib.rs:58:9] x = 2.1
-    }
 
-    #[test]
-    fn test_dbg_if_abs_diff_ne() {
-        use not_again::dbg_if_abs_diff_ne;
-        fn f(x: f32) -> f32 {
-            dbg_if_abs_diff_ne!(x, f32) + 0.1
+        #[test]
+        fn test_dbg_if_relative_ne_with_args() {
+            use not_again::dbg_if_relative_ne;
+            fn f(x: f32) -> f32 {
+                dbg_if_relative_ne!(x, f32, epsilon = 1.0)
+            }
+            f(1.0); // Outputs: [src/lib.rs:58:9] x = 1.0
+            f(1.5); // No output.
+            f(2.0); // No output.
+            f(2.1); // Outputs: [src/lib.rs:58:9] x = 2.1
         }
-        f(1.0); // Outputs: [src/lib.rs:58:9] x = 1.0
-        f(1.0); // No output.
-        f(1.1); // Outputs: [src/lib.rs:58:9] x = 1.1
-    }
 
-    #[test]
-    fn test_dbg_if_abs_diff_ne_with_args() {
-        use not_again::dbg_if_abs_diff_ne;
-        fn f(x: f32) -> f32 {
-            dbg_if_abs_diff_ne!(x, f32, epsilon = 1.0)
+        #[test]
+        fn test_dbg_if_abs_diff_ne() {
+            use not_again::dbg_if_abs_diff_ne;
+            fn f(x: f32) -> f32 {
+                dbg_if_abs_diff_ne!(x, f32) + 0.1
+            }
+            f(1.0); // Outputs: [src/lib.rs:58:9] x = 1.0
+            f(1.0); // No output.
+            f(1.1); // Outputs: [src/lib.rs:58:9] x = 1.1
         }
-        f(1.0); // Outputs: [src/lib.rs:58:9] x = 1.0
-        f(1.5); // No output.
-        f(2.0); // No output.
-        f(2.1); // Outputs: [src/lib.rs:58:9] x = 2.1
-    }
 
-    #[test]
-    fn test_dbg_if_ulps_ne() {
-        use not_again::dbg_if_ulps_ne;
-        fn f(x: f32) -> f32 {
-            dbg_if_ulps_ne!(x, f32) + 0.1
+        #[test]
+        fn test_dbg_if_abs_diff_ne_with_args() {
+            use not_again::dbg_if_abs_diff_ne;
+            fn f(x: f32) -> f32 {
+                dbg_if_abs_diff_ne!(x, f32, epsilon = 1.0)
+            }
+            f(1.0); // Outputs: [src/lib.rs:58:9] x = 1.0
+            f(1.5); // No output.
+            f(2.0); // No output.
+            f(2.1); // Outputs: [src/lib.rs:58:9] x = 2.1
         }
-        f(1.0); // Outputs: [src/lib.rs:58:9] x = 1.0
-        f(1.0); // No output.
-        f(1.1); // Outputs: [src/lib.rs:58:9] x = 1.1
-    }
 
-    #[test]
-    fn test_dbg_if_ulps_ne_with_args() {
-        use not_again::dbg_if_ulps_ne;
-        fn f(x: f32) -> f32 {
-            dbg_if_ulps_ne!(x, f32, epsilon = 1.0)
+        #[test]
+        fn test_dbg_if_ulps_ne() {
+            use not_again::dbg_if_ulps_ne;
+            fn f(x: f32) -> f32 {
+                dbg_if_ulps_ne!(x, f32) + 0.1
+            }
+            f(1.0); // Outputs: [src/lib.rs:58:9] x = 1.0
+            f(1.0); // No output.
+            f(1.1); // Outputs: [src/lib.rs:58:9] x = 1.1
         }
-        f(1.0); // Outputs: [src/lib.rs:58:9] x = 1.0
-        f(1.5); // No output.
-        f(2.0); // No output.
-        f(2.1); // Outputs: [src/lib.rs:58:9] x = 2.1
+
+        #[test]
+        fn test_dbg_if_ulps_ne_with_args() {
+            use not_again::dbg_if_ulps_ne;
+            fn f(x: f32) -> f32 {
+                dbg_if_ulps_ne!(x, f32, epsilon = 1.0)
+            }
+            f(1.0); // Outputs: [src/lib.rs:58:9] x = 1.0
+            f(1.5); // No output.
+            f(2.0); // No output.
+            f(2.1); // Outputs: [src/lib.rs:58:9] x = 2.1
+        }
     }
 }
