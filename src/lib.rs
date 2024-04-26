@@ -93,12 +93,11 @@ macro_rules! dbg_if_hash_ne {
         match $val {
             tmp => {
 
-            use $crate::__core::{hash::{Hash, Hasher}, sync::atomic::{AtomicUsize, Ordering}};
-            static HASH: AtomicUsize = AtomicUsize::new(0);
+            use $crate::__core::{hash::{Hash, Hasher}, sync::atomic::{AtomicU64, Ordering}};
+            static HASH: AtomicU64 = AtomicU64::new(0);
             let mut s = ::std::hash::DefaultHasher::new();
             tmp.hash(&mut s);
-            // let current_hash = std::dbg!(s.finish() as usize);
-            let current_hash = s.finish() as usize;
+            let current_hash = s.finish();
             if HASH.fetch_update(Ordering::SeqCst, Ordering::SeqCst, |h| (h != current_hash).then_some(current_hash)).is_ok() {
                ::std::eprintln!("[{}:{}:{}] {} = {:#?}",
                     ::std::file!(), ::std::line!(), ::std::column!(), ::std::stringify!($val), &tmp);
@@ -115,114 +114,18 @@ macro_rules! dbg_if_hash_ne {
 #[cfg(feature = "std")]
 #[macro_export]
 macro_rules! dbg_if_ne {
-    // NOTE: We cannot use `concat!` to make a static string as a format argument
-    // of `eprintln!` because `file!` could contain a `{` or
-    // `$val` expression could be a block (`{ .. }`), in which case the `eprintln!`
-    // will be malformed.
-    ($val:expr $(,)?) => {
-        // Use of `match` here is intentional because it affects the lifetimes
-        // of temporaries - https://stackoverflow.com/a/48732525/1063961
-        match $val {
-            tmp => {
-            use $crate::__core::sync::atomic::{AtomicBool, AtomicIsize, Ordering};
-            static FIRST: AtomicBool = AtomicBool::new(true);
-            let first = FIRST.swap(false, Ordering::Relaxed);
-            // static VALUE: AtomicIsize = AtomicIsize::new(0);
-            static VALUE: atomic::Atomic<isize> = atomic::Atomic::new(0);
-            // let new_value: isize = (tmp / $tol).try_into().expect("Can't make isize");
-            if VALUE.fetch_update(Ordering::SeqCst, Ordering::SeqCst, |v| (first || v != tmp).then_some(tmp)).is_ok() {
-               ::std::eprintln!("[{}:{}:{}] {} = {:#?}",
-                    ::std::file!(), ::std::line!(), ::std::column!(), ::std::stringify!($val), &tmp);
-            }
-            tmp
-        }
-        }
-    };
 
-    // ($val:expr $(,)?) => {
-    //      $crate::dbg_if_ne!($val, 1)
-    // };
-    // ($($val:expr),+ $(,)?) => {
-    //     ($($crate::dbg_if_hash_ne!($val)),+,)
-    // };
-}
-use atomic_float::{AtomicF64, AtomicF32};
-
-// pub struct Atomic<T> {
-//     value: T,
-// }
-
-
-// impl Atomic<f64> {
-//     fn atomic(&self) -> AtomicF64 {
-//         AtomicF64::new(0.0)
-//     }
-// }
-
-// impl Atomic<f32> {
-//     fn atomic(&self) -> AtomicF32 {
-//         AtomicF32::new(0.0)
-//     }
-// }
-
-macro_rules! static_atomic {
-    ($name:ident, u8) => {
-        static $name: AtomicU8 = AtomicU8::new(0.0);
-    };
-    ($name:ident, u16) => {
-        static $name: AtomicU16 = AtomicU16::new(0.0);
-    };
-    ($name:ident, u32) => {
-        static $name: AtomicU32 = AtomicU32::new(0.0);
-    };
-    ($name:ident, u64) => {
-        static $name: AtomicU64 = AtomicU64::new(0.0);
-    };
-    ($name:ident, usize) => {
-        static $name: AtomicUsize = AtomicUsize::new(0.0);
-    };
-    ($name:ident, i8) => {
-        static $name: AtomicI8 = AtomicI8::new(0.0);
-    };
-    ($name:ident, i16) => {
-        static $name: AtomicI16 = AtomicI16::new(0.0);
-    };
-    ($name:ident, i32) => {
-        static $name: AtomicI32 = AtomicI32::new(0.0);
-    };
-    ($name:ident, i64) => {
-        static $name: AtomicI64 = AtomicI64::new(0.0);
-    };
-    ($name:ident, isize) => {
-        static $name: AtomicIsize = AtomicIsize::new(0.0);
-    };
-    ($name:ident, f32) => {
-        static $name: AtomicF32 = AtomicF32::new(0.0);
-    };
-    ($name:ident, f64) => {
-        static $name: AtomicF64 = AtomicF64::new(0.0);
-    };
-}
-
-#[cfg(feature = "std")]
-#[macro_export]
-macro_rules! dbg_if_relative_ne {
-    // NOTE: We cannot use `concat!` to make a static string as a format argument
-    // of `eprintln!` because `file!` could contain a `{` or
-    // `$val` expression could be a block (`{ .. }`), in which case the `eprintln!`
-    // will be malformed.
-    ($val:expr, $type:tt, $($arg:tt)*) => {
+    ($val:expr, $type:tt, $ne:expr) => {
         // Use of `match` here is intentional because it affects the lifetimes
         // of temporaries - https://stackoverflow.com/a/48732525/1063961
         {
-            use $crate::__core::{any::Any, sync::atomic::{AtomicBool, AtomicIsize, Ordering}};
-            use atomic_float::{AtomicF64, AtomicF32};
+            use $crate::__core::{sync::atomic::{AtomicBool, Ordering}};
             static FIRST: AtomicBool = AtomicBool::new(true);
             let first = FIRST.swap(false, Ordering::Relaxed);
             match $val {
                 tmp => {
-                    static_atomic!(VALUE, $type);
-                    if VALUE.fetch_update(Ordering::SeqCst, Ordering::SeqCst, |v| (first || ::approx::relative_ne!(v, tmp, $($arg)+)).then_some(tmp)).is_ok() {
+                    static_atomic!(VALUE: $type);
+                    if VALUE.fetch_update(Ordering::SeqCst, Ordering::SeqCst, |v| (first || $ne(v, tmp)).then_some(tmp)).is_ok() {
                         ::std::eprintln!("[{}:{}:{}] {} = {:#?}",
                                          ::std::file!(), ::std::line!(), ::std::column!(), ::std::stringify!($val), &tmp);
                     }
@@ -233,17 +136,55 @@ macro_rules! dbg_if_relative_ne {
     };
 
     ($val:expr, $type:tt) => {
-        dbg_if_relative_ne!($val, $type,)
-    }
+        dbg_if_ne!($val, $type, |last_value, new_value| last_value != new_value)
+
+    };
 }
 
+macro_rules! static_atomic {
+    ($name:ident: u8) => {
+        static $name: ::core::sync::atomic::AtomicU8 = ::core::sync::atomic::AtomicU8::new(0);
+    };
+    ($name:ident: u16) => {
+        static $name: ::core::sync::atomic::AtomicU16 = ::core::sync::atomic::AtomicU16::new(0);
+    };
+    ($name:ident: u32) => {
+        static $name: ::core::sync::atomic::AtomicU32 = ::core::sync::atomic::AtomicU32::new(0);
+    };
+    ($name:ident: u64) => {
+        static $name: ::core::sync::atomic::AtomicU64 = ::core::sync::atomic::AtomicU64::new(0);
+    };
+    ($name:ident: usize) => {
+        static $name: ::core::sync::atomic::AtomicUsize = ::core::sync::atomic::AtomicUsize::new(0);
+    };
+    ($name:ident: i8) => {
+        static $name: ::core::sync::atomic::AtomicI8 = ::core::sync::atomic::AtomicI8::new(0);
+    };
+    ($name:ident: i16) => {
+        static $name: ::core::sync::atomic::AtomicI16 = ::core::sync::atomic::AtomicI16::new(0);
+    };
+    ($name:ident: i32) => {
+        static $name: ::core::sync::atomic::AtomicI32 = ::core::sync::atomic::AtomicI32::new(0);
+    };
+    ($name:ident: i64) => {
+        static $name: ::core::sync::atomic::AtomicI64 = ::core::sync::atomic::AtomicI64::new(0);
+    };
+    ($name:ident: isize) => {
+        static $name: ::core::sync::atomic::AtomicIsize = ::core::sync::atomic::AtomicIsize::new(0);
+    };
+    ($name:ident: f32) => {
+        static $name: ::atomic_float::AtomicF32 = ::atomic_float::AtomicF32::new(0.0);
+    };
+    ($name:ident: f64) => {
+        static $name: ::atomic_float::AtomicF64 = ::atomic_float::AtomicF64::new(0.0);
+    };
+}
 
 #[cfg(test)]
 mod test {
 
     #[cfg(feature = "std")]
     mod test_dbg {
-        // use std::borrow::Cow;
         use std::io::Read;
         use gag::BufferRedirect;
         use regex::Regex;
@@ -306,6 +247,19 @@ mod test {
         }
 
         #[test]
+        fn test_dbg_if_hash_ne_multiple() {
+            fn f(x: usize, y: u64) {
+                dbg_if_hash_ne!(x, y);
+            }
+
+            let output = strip_dbg(capture_stderr(|| {
+                f(1, 3);
+                f(2, 3);
+            }));
+            assert_eq!(&output[..], "x = 1\ny = 3\nx = 2");
+        }
+
+        #[test]
         fn test_dbg_if_hash_ne_eval_once() {
             fn f(x: &mut usize) {
                 dbg_if_hash_ne!({ *x += 1; *x });
@@ -321,7 +275,7 @@ mod test {
         #[test]
         fn test_dbg_if_ne() {
             fn f(x: isize) {
-                dbg_if_ne!(x);
+                dbg_if_ne!(x, isize);
             }
 
             let output = strip_dbg(capture_stderr(|| {
@@ -335,9 +289,9 @@ mod test {
         }
 
         #[test]
-        fn test_dbg_if_relative_ne_f32() {
+        fn test_dbg_if_ne_f32() {
             fn f(x: f32) {
-                dbg_if_relative_ne!(x, f32, epsilon = 0.1);
+                dbg_if_ne!(x, f32, |a, b| ::approx::relative_ne!(a, b, epsilon = 0.1));
             }
 
             let output = strip_dbg(capture_stderr(|| {
@@ -351,9 +305,9 @@ mod test {
         }
 
         #[test]
-        fn test_dbg_if_relative_ne_f64() {
+        fn test_dbg_if_ne_f64() {
             fn f(x: f64) {
-                dbg_if_relative_ne!(x, f64, epsilon = 0.1);
+                dbg_if_ne!(x, f64, |a, b| ::approx::relative_ne!(a, b, epsilon = 0.1));
             }
 
             let output = strip_dbg(capture_stderr(|| {
