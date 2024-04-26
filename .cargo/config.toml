@@ -1,2 +1,4 @@
 [alias]
-tt = "test --features std -- --test-threads=1 --nocapture"
+tt = "test -- --test-threads=1 --nocapture"
+tf = "test --features float -- --test-threads=1 --nocapture"
+td = "test --doc --features float -- --test-threads=1 --nocapture"

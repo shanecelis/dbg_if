@@ -1,26 +1,28 @@
-# Once
+# not_again
 
-[![Build Status](https://travis-ci.org/phil-opp/rust-once.svg?branch=master)](https://travis-ci.org/phil-opp/rust-once)
+![Maintenance](https://img.shields.io/badge/maintenance-actively--developed-brightgreen.svg)
+[![CI](https://github.com/shanecelis/not_again/actions/workflows/rust.yml/badge.svg)](https://github.com/shanecelis/not_again/actions)
+  [![crates-io](https://img.shields.io/crates/v/not_again.svg)](https://crates.io/crates/not_again)
+  [![api-docs](https://docs.rs/not_again/badge.svg)](https://docs.rs/not_again)
 
-This `#![no_std]` crate provides an `assert_has_not_been_called!` macro that panics if the surrounding function is called twice. Useful for initialization functions.
-
-[Documentation](https://crates.fyi/crates/once/)
+This crate provides `dbg_if_ne!` variants that only print changed values.
 
 ## Example
 
 ```rust
-#[macro_use]
-extern crate once;
-
-fn init() {
-    assert_has_not_been_called!("the init function must only be called {}", "once");
+fn f(x: u8) -> u8 {
+  dbg!(x) + 1
 }
-
-fn main() {
-    init();
-    // init(); // "the init function must only be called once"
-}
+assert_eq!(f(1), 2);
 ```
+
+## Motivation
+
+The `dbg!` macro is great. It's like being able to add a probe right into your
+code without disturbing everything since it works on expressions. For straight
+shot code, it is perfect. For code in tight loops, however, it does leave
+something to be desired. Your terminal will scream, "x = 1" at you again and
+again until you say, "No, not again."
 
 ## License
 
@@ -34,6 +36,6 @@ at your option.
 
 ### Contribution
 
-Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in the
-work by you, as defined in the Apache-2.0 license, shall be dual licensed as above, without any
-additional terms or conditions.
+Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
+dual licensed as above, without any additional terms or conditions.
