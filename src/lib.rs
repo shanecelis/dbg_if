@@ -1,14 +1,23 @@
 #![doc(html_root_url = "https://docs.rs/not_again/0.2.3")]
 #![doc = include_str!("../README.md")]
+#![forbid(missing_docs)]
 
+/// Calls [std::dbg] exactly once per callsite.
+///
+/// ```rust
+/// use not_again::dbg_once;
+/// for i in 0..10 {
+///     dbg_once!(i); // Outputs: [src/lib.rs:9:9] x = 0
+/// }
+/// ```
 #[macro_export]
 macro_rules! dbg_once {
     ($($arg:tt)*) => {{
         {
             use ::core::sync::atomic::{AtomicBool, Ordering};
-            static CALLED: AtomicBool = AtomicBool::new(false);
-            let called = CALLED.swap(true, Ordering::Relaxed);
-            if !called {
+            static FIRST: AtomicBool = AtomicBool::new(true);
+            let called = FIRST.swap(false, Ordering::Relaxed);
+            if called {
                 std::dbg!($($arg)+)
             } else {
                 $($arg)+
@@ -17,6 +26,73 @@ macro_rules! dbg_once {
     }};
 }
 
+/// Calls [std::dbg] if the argument is not equal to its prior value.
+///
+/// ```rust
+/// use not_again::dbg_if_ne;
+/// fn f(x: u8) -> u8 {
+///     dbg_if_ne!(x, u8) + 1
+/// }
+/// f(1); // Outputs: [src/lib.rs:58:9] x = 1
+/// f(1); // No output.
+/// f(2); // Outputs: [src/lib.rs:58:9] x = 2
+/// ```
+///
+/// # Use a closure as third argument
+///
+/// This macro accepts a third argument for a function or closure "not equal" or
+/// `ne` with this signature: `FnMut<T>(T, T) -> bool`.
+///
+/// ```rust
+/// use not_again::dbg_if_ne;
+/// for i in 0..=20 {
+///     dbg_if_ne!(i, i8,
+///         |last_value: i8, new_value: i8|
+///             (new_value - last_value).abs() >= 10);
+/// }
+/// // Outputs: [src/lib.rs:58:9] i = 0
+/// // Outputs: [src/lib.rs:58:9] i = 10
+/// // Outputs: [src/lib.rs:58:9] i = 20
+/// ```
+#[macro_export]
+macro_rules! dbg_if_ne {
+    ($val:expr, $type:tt, $ne:expr) => {
+        {
+            use ::core::{sync::atomic::{AtomicBool, Ordering}};
+            static FIRST: AtomicBool = AtomicBool::new(true);
+            let first = FIRST.swap(false, Ordering::Relaxed);
+            match $val {
+                tmp => {
+                    $crate::static_atomic!(VALUE: $type);
+                    let ne_fn = $ne;
+                    if VALUE.fetch_update(Ordering::SeqCst, Ordering::SeqCst, |v| (first || ne_fn(v, tmp)).then_some(tmp)).is_ok() {
+                        ::std::eprintln!("[{}:{}:{}] {} = {:#?}",
+                                         ::std::file!(), ::std::line!(), ::std::column!(), ::std::stringify!($val), &tmp);
+                    }
+                    tmp
+                }
+            }
+        }
+    };
+
+    ($val:expr, $type:tt $(,)?) => {
+        $crate::dbg_if_ne!($val, $type, |last_value, new_value| last_value != new_value)
+    };
+}
+
+/// Calls [std::dbg] if the argument's hash is not equal to its prior value.
+///
+/// ```rust
+/// use not_again::dbg_if_hash_ne;
+/// let mut s: String = "hello".into();
+/// fn f(x: &mut String) {
+///     dbg_if_hash_ne!(x);
+/// }
+/// f(&mut s); // Outputs: [src/lib.rs:37:9] x = "hello"
+/// f(&mut s); // No output.
+/// s.push('!');
+/// f(&mut s); // Outputs: [src/lib.rs:37:9] x = "hello!"
+/// ```
 #[macro_export]
 macro_rules! dbg_if_hash_ne {
     ($val:expr $(,)?) => {
@@ -41,36 +117,36 @@ macro_rules! dbg_if_hash_ne {
     };
 }
 
-#[macro_export]
-macro_rules! dbg_if_ne {
-    ($val:expr, $type:tt, $ne:expr) => {
-        {
-            use ::core::{sync::atomic::{AtomicBool, Ordering}};
-            static FIRST: AtomicBool = AtomicBool::new(true);
-            let first = FIRST.swap(false, Ordering::Relaxed);
-            match $val {
-                tmp => {
-                    static_atomic!(VALUE: $type);
-                    let ne_fn = $ne;
-                    if VALUE.fetch_update(Ordering::SeqCst, Ordering::SeqCst, |v| (first || ne_fn(v, tmp)).then_some(tmp)).is_ok() {
-                        ::std::eprintln!("[{}:{}:{}] {} = {:#?}",
-                                         ::std::file!(), ::std::line!(), ::std::column!(), ::std::stringify!($val), &tmp);
-                    }
-                    tmp
-                }
-            }
-        }
-    };
-
-    ($val:expr, $type:tt) => {
-        dbg_if_ne!($val, $type, |last_value, new_value| last_value != new_value)
-    };
-}
-
+/// Calls [std::dbg] if the float argument is not equal to its prior value.
+///
+/// ```rust
+/// use not_again::dbg_if_relative_ne;
+/// fn f(x: f32) -> f32 {
+///     dbg_if_relative_ne!(x, f32) + 0.1
+/// }
+/// f(1.0); // Outputs: [src/lib.rs:58:9] x = 1.0
+/// f(1.0); // No output.
+/// f(1.1); // Outputs: [src/lib.rs:58:9] x = 1.1
+/// ```
+///
+/// # Arguments
+///
+/// Accepts arguments that [approx::relative_ne] accept.
+/// ```rust
+/// use not_again::dbg_if_relative_ne;
+/// fn f(x: f32) -> f32 {
+///     dbg_if_relative_ne!(x, f32, epsilon = 1.0)
+/// }
+/// f(1.0); // Outputs: [src/lib.rs:58:9] x = 1.0
+/// f(1.5); // No output.
+/// f(2.0); // No output.
+/// f(2.1); // Outputs: [src/lib.rs:58:9] x = 2.1
+/// ```
+#[cfg(feature = "float")]
 #[macro_export]
 macro_rules! dbg_if_relative_ne {
     ($val:expr, $type:tt, $($arg:tt)*) => {
-        dbg_if_ne!($val, $type, |a, b| ::approx::relative_ne!(a, b, $($arg)*))
+        $crate::dbg_if_ne!($val, $type, |a, b| ::approx::relative_ne!(a, b, $($arg)*))
     };
 
     ($val:expr, $type:tt) => {
@@ -78,11 +154,36 @@ macro_rules! dbg_if_relative_ne {
     };
 }
 
+/// Calls [std::dbg] if the float argument is not equal to its prior value.
+///
+/// ```rust
+/// use not_again::dbg_if_abs_diff_ne;
+/// fn f(x: f32) -> f32 {
+///     dbg_if_abs_diff_ne!(x, f32) + 0.1
+/// }
+/// f(1.0); // Outputs: [src/lib.rs:58:9] x = 1.0
+/// f(1.0); // No output.
+/// f(1.1); // Outputs: [src/lib.rs:58:9] x = 1.1
+/// ```
+///
+/// # Arguments
+///
+/// Accepts arguments that [approx::abs_diff_ne] accept.
+/// ```rust
+/// use not_again::dbg_if_abs_diff_ne;
+/// fn f(x: f32) -> f32 {
+///     dbg_if_abs_diff_ne!(x, f32, epsilon = 1.0)
+/// }
+/// f(1.0); // Outputs: [src/lib.rs:58:9] x = 1.0
+/// f(1.5); // No output.
+/// f(2.0); // No output.
+/// f(2.1); // Outputs: [src/lib.rs:58:9] x = 2.1
+/// ```
 #[cfg(feature = "float")]
 #[macro_export]
 macro_rules! dbg_if_abs_diff_ne {
     ($val:expr, $type:tt, $($arg:tt)*) => {
-        dbg_if_ne!($val, $type, |a, b| ::approx::abs_diff_ne!(a, b, $($arg)*))
+        $crate::dbg_if_ne!($val, $type, |a, b| ::approx::abs_diff_ne!(a, b, $($arg)*))
     };
 
     ($val:expr, $type:tt) => {
@@ -90,11 +191,36 @@ macro_rules! dbg_if_abs_diff_ne {
     };
 }
 
+/// Calls [std::dbg] if the float argument is not equal to its prior value.
+///
+/// ```rust
+/// use not_again::dbg_if_ulps_ne;
+/// fn f(x: f32) -> f32 {
+///     dbg_if_ulps_ne!(x, f32) + 0.1
+/// }
+/// f(1.0); // Outputs: [src/lib.rs:58:9] x = 1.0
+/// f(1.0); // No output.
+/// f(1.1); // Outputs: [src/lib.rs:58:9] x = 1.1
+/// ```
+///
+/// # Arguments
+///
+/// Accepts arguments that [approx::ulps_ne] accept.
+/// ```rust
+/// use not_again::dbg_if_ulps_ne;
+/// fn f(x: f32) -> f32 {
+///     dbg_if_ulps_ne!(x, f32, epsilon = 1.0)
+/// }
+/// f(1.0); // Outputs: [src/lib.rs:58:9] x = 1.0
+/// f(1.5); // No output.
+/// f(2.0); // No output.
+/// f(2.1); // Outputs: [src/lib.rs:58:9] x = 2.1
+/// ```
 #[cfg(feature = "float")]
 #[macro_export]
 macro_rules! dbg_if_ulps_ne {
     ($val:expr, $type:tt, $($arg:tt)*) => {
-        dbg_if_ne!($val, $type, |a, b| ::approx::ulps_ne!(a, b, $($arg)*))
+        $crate::dbg_if_ne!($val, $type, |a, b| ::approx::ulps_ne!(a, b, $($arg)*))
     };
 
     ($val:expr, $type:tt) => {
@@ -102,6 +228,7 @@ macro_rules! dbg_if_ulps_ne {
     };
 }
 
+#[doc(hidden)]
 #[macro_export]
 macro_rules! static_atomic {
     ($name:ident: u8) => {
@@ -142,6 +269,7 @@ macro_rules! static_atomic {
     };
 }
 
+#[doc(hidden)]
 #[cfg(feature = "float")]
 #[macro_export]
 macro_rules! static_atomic_float {
@@ -153,207 +281,13 @@ macro_rules! static_atomic_float {
     };
 }
 
+#[doc(hidden)]
 #[cfg(not(feature = "float"))]
 #[macro_export]
 macro_rules! static_atomic_float {
     ($name:ident: $type:tt) => {
-        compile_error!("Feature \"float\" must be enabled on \"not_again\" crate.");
+        compile_error!(
+            "Feature \"float\" must be enabled on \"not_again\" crate to use atomic floats.");
     };
 }
 
-#[cfg(test)]
-mod test {
-
-    fn capture_stderr<F: FnOnce()>(f: F) -> String {
-        use gag::BufferRedirect;
-        use std::io::Read;
-        let mut buf = BufferRedirect::stderr().unwrap();
-        f();
-        let mut output = String::new();
-        buf.read_to_string(&mut output).unwrap();
-        output
-    }
-
-    fn strip_dbg(input: String) -> String {
-        use regex::Regex;
-        let r = Regex::new("\\[.*\\] ").unwrap();
-        // r.replace_all(&input.trim(), "[...]").to_string()
-        r.replace_all(input.trim(), "").to_string()
-    }
-
-    mod test_dbg {
-        use super::*;
-
-        #[test]
-        fn test_run_once() {
-            fn f() {
-                dbg_once!("hi");
-            }
-            let output = strip_dbg(capture_stderr(|| {
-                f();
-            }));
-            assert_eq!(&output[..], "\"hi\" = \"hi\"");
-        }
-
-        #[test]
-        fn test_dbg_once() {
-            fn f() {
-                dbg_once!("hi");
-            }
-            let output = strip_dbg(capture_stderr(|| {
-                f();
-                f();
-            }));
-            assert_eq!(&output[..], "\"hi\" = \"hi\"");
-        }
-
-        #[test]
-        fn test_dbg_if_hash_ne() {
-            fn f(x: usize) {
-                dbg_if_hash_ne!(x);
-            }
-
-            let output = strip_dbg(capture_stderr(|| {
-                f(1);
-                f(2);
-            }));
-            assert_eq!(&output[..], "x = 1\nx = 2");
-        }
-
-        #[test]
-        fn test_dbg_if_hash_ne_multiple() {
-            fn f(x: usize, y: u64) {
-                dbg_if_hash_ne!(x, y);
-            }
-
-            let output = strip_dbg(capture_stderr(|| {
-                f(1, 3);
-                f(2, 3);
-            }));
-            assert_eq!(&output[..], "x = 1\ny = 3\nx = 2");
-        }
-
-        #[test]
-        fn test_dbg_if_hash_ne_eval_once() {
-            fn f(x: &mut usize) {
-                dbg_if_hash_ne!({
-                    *x += 1;
-                    *x
-                });
-            }
-
-            let output = strip_dbg(capture_stderr(|| {
-                let mut x: usize = 0;
-                f(&mut x);
-            }));
-            assert_eq!(&output[..], "{ *x += 1; *x } = 1");
-        }
-
-        #[test]
-        fn test_dbg_if_ne() {
-            fn f(x: isize) {
-                dbg_if_ne!(x, isize);
-            }
-
-            let output = strip_dbg(capture_stderr(|| {
-                let mut x: isize = 1;
-                f(x);
-                f(x);
-                x += 1;
-                f(x);
-            }));
-            assert_eq!(&output[..], "x = 1\nx = 2");
-        }
-
-        #[test]
-        fn test_pass_thru() {
-            fn a() {
-                let _x: usize = dbg_once!(1);
-            }
-
-            let output = strip_dbg(capture_stderr(|| {
-                a();
-                a();
-            }));
-            assert_eq!(&output[..], "1 = 1");
-        }
-    }
-
-    #[cfg(feature = "float")]
-    mod float_tests {
-        use super::*;
-        use approx::relative_eq;
-
-        #[test]
-        fn test_approx() {
-            assert!(relative_eq!(1.0, 1.1, epsilon = 0.2));
-            // assert!(relative_eq!(1, 1)); Not implemented
-        }
-
-        #[test]
-        fn test_dbg_if_ne_f32() {
-            fn f(x: f32) {
-                dbg_if_ne!(x, f32, |a, b| ::approx::relative_ne!(a, b, epsilon = 0.1));
-            }
-
-            let output = strip_dbg(capture_stderr(|| {
-                let mut x: f32 = 1.1;
-                f(x);
-                f(x);
-                x += 0.1;
-                f(x);
-            }));
-            assert_eq!(&output[..], "x = 1.1\nx = 1.2");
-        }
-
-        #[test]
-        fn test_dbg_if_ne_f32_with_function_name() {
-            fn my_ne(a: f32, b: f32) -> bool {
-                ::approx::relative_ne!(a, b, epsilon = 0.1)
-            }
-            fn f(x: f32) {
-                dbg_if_ne!(x, f32, my_ne);
-            }
-
-            let output = strip_dbg(capture_stderr(|| {
-                let mut x: f32 = 1.1;
-                f(x);
-                f(x);
-                x += 0.1;
-                f(x);
-            }));
-            assert_eq!(&output[..], "x = 1.1\nx = 1.2");
-        }
-
-        #[test]
-        fn test_dbg_if_relative_ne_f32() {
-            fn f(x: f32) {
-                dbg_if_relative_ne!(x, f32, epsilon = 0.1);
-            }
-            let output = strip_dbg(capture_stderr(|| {
-                let mut x: f32 = 1.1;
-                f(x);
-                f(x);
-                x += 0.1;
-                f(x);
-            }));
-            assert_eq!(&output[..], "x = 1.1\nx = 1.2");
-        }
-
-        #[test]
-        fn test_dbg_if_ne_f64() {
-            fn f(x: f64) {
-                dbg_if_ne!(x, f64, |a, b| ::approx::relative_ne!(a, b, epsilon = 0.1));
-            }
-
-            let output = strip_dbg(capture_stderr(|| {
-                let mut x: f64 = 1.1;
-                f(x);
-                f(x);
-                x += 0.1;
-                f(x);
-            }));
-            assert_eq!(&output[..], "x = 1.1\nx = 1.2000000000000002");
-        }
-    }
-}
