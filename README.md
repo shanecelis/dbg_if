@@ -5,9 +5,30 @@
   [![crates-io](https://img.shields.io/crates/v/not_again.svg)](https://crates.io/crates/not_again)
   [![api-docs](https://docs.rs/not_again/badge.svg)](https://docs.rs/not_again)
 
-This crate provides `dbg_if_ne!` variants that only print changed values.
+This crate provides `dbg!` variants suitable for use in loops.
+
+> ♫ Here I go again on my own,  
+> using print statements is all I've ever known,  
+> like a drifter I was born to debug alone,  
+> but I've made up my mind.   
+> I ain't wasting no more time.  
+> Here I go `not_again` on my code. ♫
+
+## Summary
+
+The macro `dbg_once!`only prints its value the first time.
+
+The macro `dbg_if_ne!` only prints changed values.
+
+The macro `dbg_if_hash_ne!` only prints on changed hash values.
 
 ## Example
+
+
+## 
+
+
+## Motivation
 
 ```rust
 fn f(x: u8) -> u8 {
@@ -16,13 +37,24 @@ fn f(x: u8) -> u8 {
 assert_eq!(f(1), 2);
 ```
 
-## Motivation
-
 The `dbg!` macro is great. It's like being able to add a probe right into your
 code without disturbing everything since it works on expressions. For straight
 shot code, it is perfect. For code in tight loops, however, it does leave
 something to be desired. Your terminal will scream, "x = 1" at you again and
 again until you say, "No, not again."
+
+### 
+
+```rust
+fn f(x: u8) -> u8 {
+    let mut accum = 0;
+    for i in 0..10 {
+        accum += dbg!(x) + 1;
+    }
+    accum
+}
+assert_eq!(f(1), 20);
+```
 
 ## License
 
