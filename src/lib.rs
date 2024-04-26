@@ -1,4 +1,3 @@
-
 #![doc(html_root_url = "https://docs.rs/not_again/0.2.3")]
 #![doc = include_str!("../README.md")]
 
@@ -165,8 +164,8 @@ macro_rules! static_atomic_float {
 mod test {
 
     fn capture_stderr<F: FnOnce()>(f: F) -> String {
-        use std::io::Read;
         use gag::BufferRedirect;
+        use std::io::Read;
         let mut buf = BufferRedirect::stderr().unwrap();
         f();
         let mut output = String::new();
@@ -236,7 +235,10 @@ mod test {
         #[test]
         fn test_dbg_if_hash_ne_eval_once() {
             fn f(x: &mut usize) {
-                dbg_if_hash_ne!({ *x += 1; *x });
+                dbg_if_hash_ne!({
+                    *x += 1;
+                    *x
+                });
             }
 
             let output = strip_dbg(capture_stderr(|| {
@@ -278,8 +280,8 @@ mod test {
 
     #[cfg(feature = "float")]
     mod float_tests {
-        use approx::relative_eq;
         use super::*;
+        use approx::relative_eq;
 
         #[test]
         fn test_approx() {
