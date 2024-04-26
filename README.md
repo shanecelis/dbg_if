@@ -5,7 +5,7 @@
   [![crates-io](https://img.shields.io/crates/v/not_again.svg)](https://crates.io/crates/not_again)
   [![api-docs](https://docs.rs/not_again/badge.svg)](https://docs.rs/not_again)
 
-This crate provides `dbg!` variants suitable for use in loops.
+Use `dbg!` in the loop without terminal woes.
 
 > ♫ Here I go again on my own,  
 > using print statements is all I've ever known,  
@@ -16,17 +16,23 @@ This crate provides `dbg!` variants suitable for use in loops.
 
 ## Summary
 
-The macro `dbg_once!`only prints its value the first time.
+The macro [`dbg_once!`](dbg_once) only prints its value the first time.
 
-The macro `dbg_if_ne!` only prints changed values.
+The macro [`dbg_if_ne!`](dbg_if_ne) only prints changed values.
 
-The macro `dbg_if_hash_ne!` only prints on changed hash values.
+The macro [`dbg_if_hash_ne!`](dbg_if_hash_ne) only prints on changed hash values.
+
+### Feature "float"
+
+If the feature "float" is enabled, the macros for floating point arguments are
+[`dbg_if_relative_ne!`](dbg_if_relative_ne),
+[`dbg_if_abs_diff_ne!`](dbg_if_abs_diff_ne),
+[`dbg_if_ulps_ne!`](dbg_if_ulps_ne). It only print its float argument if it is
+considered "not equal" to its prior value within certain tolerances. It uses the
+[`approx`] crate. See [`approx::relative_ne`], [`approx::abs_diff_ne`],
+[`approx::ulps_ne`] for the options of each.
 
 ## Example
-
-
-## 
-
 
 ## Motivation
 
@@ -58,10 +64,10 @@ assert_eq!(f(1), 20);
 
 ## License
 
-This crate is licensed, at your option, under either the
+This crate is licensed, at your option, under either 
 
-- [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) or
-- [MIT license](http://opensource.org/licenses/MIT).
+- the [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) or
+- the [MIT license](http://opensource.org/licenses/MIT).
 
 ### Contribution
 
