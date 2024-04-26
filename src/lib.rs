@@ -177,7 +177,7 @@ mod test {
         use regex::Regex;
         let r = Regex::new("\\[.*\\] ").unwrap();
         // r.replace_all(&input.trim(), "[...]").to_string()
-        r.replace_all(&input.trim(), "").to_string()
+        r.replace_all(input.trim(), "").to_string()
     }
 
     mod test_dbg {
@@ -293,6 +293,25 @@ mod test {
         fn test_dbg_if_ne_f32() {
             fn f(x: f32) {
                 dbg_if_ne!(x, f32, |a, b| ::approx::relative_ne!(a, b, epsilon = 0.1));
+            }
+
+            let output = strip_dbg(capture_stderr(|| {
+                let mut x: f32 = 1.1;
+                f(x);
+                f(x);
+                x += 0.1;
+                f(x);
+            }));
+            assert_eq!(&output[..], "x = 1.1\nx = 1.2");
+        }
+
+        #[test]
+        fn test_dbg_if_ne_f32_with_function_name() {
+            fn my_ne(a: f32, b: f32) -> bool {
+                ::approx::relative_ne!(a, b, epsilon = 0.1)
+            }
+            fn f(x: f32) {
+                dbg_if_ne!(x, f32, my_ne);
             }
 
             let output = strip_dbg(capture_stderr(|| {
