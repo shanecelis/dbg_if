@@ -76,7 +76,9 @@ f(2.0); // No output.
 f(2.1); // Outputs: [src/lib.rs:42:9] x = 2.1
 ```
 
-## Example
+## Goals
+
+- Ease debugging introspection without resorting to a debugger.
 
 ## Motivation
 
@@ -117,8 +119,8 @@ again."
 ### Can We Do Better?
 
 Yes! Let's take note of the value at the call site---with a static atomic
-value---and instead of spamming the terminal with the same information, let's
-only emit information when it has changed.
+variable---and instead of spamming the terminal with the same information, let's
+only emit information when it has changed with [`dbg_if_ne!`].
 
 ```rust
 use not_again::dbg_if_ne;
@@ -129,11 +131,7 @@ fn f(x: u8) -> u8 {
     }
     accum
 }
-assert_eq!(f(1), 5);
-```
-
-```ignore
-[src/main.rs:59:18] x = 1 
+f(1); // Outputs: [src/main.rs:59:18] x = 1 
 ```
 
 ### But I Have Non-Atomic Values?
