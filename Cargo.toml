@@ -1,6 +1,6 @@
 [package]
 name = "not_again"
-version = "0.1.0"
+version = "0.1.0-alpha.1"
 authors = ["Shane Celis <shane.celis@gmail.com>"]
 license = "Apache-2.0/MIT"
 description = "Use dbg! in the loop without terminal woes."
