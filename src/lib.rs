@@ -34,7 +34,7 @@ macro_rules! once {
     }};
 }
 
-/// Calls [std::dbg] exactly once per call site.
+/// Calls [`std::dbg`] exactly once per call site.
 ///
 /// ```rust
 /// use not_again::dbg_once;
@@ -108,7 +108,7 @@ macro_rules! was_ne {
     };
 }
 
-/// Calls [std::dbg] if the argument is not equal to its prior value.
+/// Calls [`std::dbg`] if the argument is not equal to its prior value.
 ///
 /// ```rust
 /// use not_again::dbg_if_ne;
@@ -193,7 +193,7 @@ macro_rules! was_hash_ne {
     };
 }
 
-/// Calls [std::dbg] if the argument's hash is not equal to its prior value.
+/// Calls [`std::dbg`] if the argument's hash is not equal to its prior value.
 ///
 /// ```rust
 /// use not_again::dbg_if_hash_ne;
