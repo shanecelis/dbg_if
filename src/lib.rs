@@ -2,7 +2,39 @@
 #![doc = include_str!("../README.md")]
 #![forbid(missing_docs)]
 
-/// Calls [std::dbg] exactly once per callsite.
+/// Returns true once per call site.
+///
+/// ```rust
+/// fn f() -> bool {
+///     not_again::once!()
+/// }
+/// assert!(f());
+/// assert!(!f());
+/// ```
+///
+/// # Per call site clarification
+///
+/// If one calls `once()` twice like the test below, it will return true in both
+/// cases because those are two different call sites.
+///
+/// ```rust
+/// use not_again::once;
+/// assert!(once!()); // Returns true.
+/// assert!(once!()); // Returns true too.
+/// ```
+#[macro_export]
+macro_rules! once {
+    () => {{
+        {
+            use ::core::sync::atomic::{AtomicBool, Ordering};
+            static FIRST: AtomicBool = AtomicBool::new(true);
+            let first = FIRST.swap(false, Ordering::Relaxed);
+            first
+        }
+    }};
+}
+
+/// Calls [std::dbg] exactly once per call site.
 ///
 /// ```rust
 /// use not_again::dbg_once;
@@ -14,16 +46,66 @@
 macro_rules! dbg_once {
     ($($arg:tt)*) => {{
         {
-            use ::core::sync::atomic::{AtomicBool, Ordering};
-            static FIRST: AtomicBool = AtomicBool::new(true);
-            let called = FIRST.swap(false, Ordering::Relaxed);
-            if called {
+            if $crate::once!() {
                 std::dbg!($($arg)+)
             } else {
                 $($arg)+
             }
         }
     }};
+}
+
+/// Returns true if the given expression is not equal to what it was.
+///
+/// ```rust
+/// use not_again::was_ne;
+/// fn f(x: u8) -> bool {
+///     was_ne!(x, u8)
+/// }
+/// assert!(f(1));
+/// assert!(!f(1));
+/// assert!(f(2));
+/// assert!(!f(2));
+/// assert!(f(1));
+/// ```
+///
+/// # Use a closure as third argument
+///
+/// This macro accepts a third argument for a function or closure "not equal" or
+/// `ne` with this signature: `FnMut<T>(T, T) -> bool`.
+///
+/// ```rust
+/// use not_again::was_ne;
+/// fn f(x: i8) -> bool {
+///     was_ne!(x, i8,
+///         |last_value: i8, new_value: i8|
+///             (new_value - last_value).abs() >= 10)
+/// }
+/// assert!(f(0));
+/// assert!(!f(1));
+/// assert!(!f(2));
+/// assert!(f(10));
+/// ```
+#[macro_export]
+macro_rules! was_ne {
+    ($val:expr, $type:tt, $ne:expr) => {
+        {
+            use ::core::{sync::atomic::{AtomicBool, Ordering}};
+            static FIRST: AtomicBool = AtomicBool::new(true);
+            let first = FIRST.swap(false, Ordering::Relaxed);
+            match $val {
+                tmp => {
+                    $crate::static_atomic!(VALUE: $type);
+                    let ne_fn = $ne;
+                    VALUE.fetch_update(Ordering::SeqCst, Ordering::SeqCst, |v| (first || ne_fn(v, tmp)).then_some(tmp)).is_ok()
+                }
+            }
+        }
+    };
+
+    ($val:expr, $type:tt $(,)?) => {
+        was_ne!($val, $type, |last_value, new_value| last_value != new_value)
+    };
 }
 
 /// Calls [std::dbg] if the argument is not equal to its prior value.
@@ -80,6 +162,37 @@ macro_rules! dbg_if_ne {
     };
 }
 
+/// Returns true if its the first call or the given expression's hash is not equal to
+/// what it was.
+///
+/// ```rust
+/// use not_again::was_hash_ne;
+/// let mut s: String = "hello".into();
+/// fn f(x: &str) -> bool {
+///     was_hash_ne!(x)
+/// }
+/// assert!(f(&s));
+/// assert!(!f(&s));
+/// s.push('!');
+/// assert!(f(&s));
+/// ```
+#[macro_export]
+macro_rules! was_hash_ne {
+    ($val:expr $(,)?) => {
+        match $val {
+            tmp => {
+                use ::core::{hash::{Hash, Hasher}, sync::atomic::{AtomicU64, Ordering}};
+                static HASH: AtomicU64 = AtomicU64::new(0);
+                let mut s = ::std::hash::DefaultHasher::new();
+                tmp.hash(&mut s);
+                let current_hash = s.finish();
+                let changed = HASH.fetch_update(Ordering::SeqCst, Ordering::SeqCst, |h| (h != current_hash).then_some(current_hash)).is_ok();
+                changed
+            }
+        }
+    };
+}
+
 /// Calls [std::dbg] if the argument's hash is not equal to its prior value.
 ///
 /// ```rust
@@ -113,118 +226,110 @@ macro_rules! dbg_if_hash_ne {
         }
     };
     ($($val:expr),+ $(,)?) => {
-        ($($crate::dbg_if_hash_ne!($val)),+,)
+
+   ($($crate::dbg_if_hash_ne!($val)),+,)
     };
 }
 
-/// Calls [std::dbg] if the float argument is not equal to its prior value.
+/// Returns a not equal closure appropriate for the third argument of [`was_ne`]
+/// or [`dbg_if_ne`].
 ///
 /// ```rust
-/// use not_again::dbg_if_relative_ne;
-/// fn f(x: f32) -> f32 {
-///     dbg_if_relative_ne!(x, f32) + 0.1
+/// use not_again::{was_ne, abs_diff_ne_args};
+/// fn f(x: f32) -> bool {
+///     was_ne!(x, f32, abs_diff_ne_args!())
 /// }
-/// f(1.0); // Outputs: [src/lib.rs:58:9] x = 1.0
-/// f(1.0); // No output.
-/// f(1.1); // Outputs: [src/lib.rs:58:9] x = 1.1
-/// ```
-///
-/// # Arguments
-///
-/// Accepts arguments that [approx::relative_ne] accept.
-/// ```rust
-/// use not_again::dbg_if_relative_ne;
-/// fn f(x: f32) -> f32 {
-///     dbg_if_relative_ne!(x, f32, epsilon = 1.0, max_relative = 0.5)
-/// }
-/// f(1.0); // Outputs: [src/lib.rs:58:9] x = 1.0
-/// f(1.5); // No output.
-/// f(2.0); // No output.
-/// f(2.1); // Outputs: [src/lib.rs:58:9] x = 2.1
-/// ```
-#[cfg(feature = "float")]
-#[macro_export]
-macro_rules! dbg_if_relative_ne {
-    ($val:expr, $type:tt, $($arg:tt)*) => {
-        $crate::dbg_if_ne!($val, $type, |a, b| ::approx::relative_ne!(a, b, $($arg)*))
-    };
-
-    ($val:expr, $type:tt) => {
-        dbg_if_relative_ne!($val, $type,)
-    };
-}
-
-/// Calls [std::dbg] if the float argument is not equal to its prior value.
-///
-/// ```rust
-/// use not_again::dbg_if_abs_diff_ne;
-/// fn f(x: f32) -> f32 {
-///     dbg_if_abs_diff_ne!(x, f32) + 0.1
-/// }
-/// f(1.0); // Outputs: [src/lib.rs:58:9] x = 1.0
-/// f(1.0); // No output.
-/// f(1.1); // Outputs: [src/lib.rs:58:9] x = 1.1
+/// assert!(f(1.0));
+/// assert!(!f(1.0));
+/// assert!(f(1.1));
 /// ```
 ///
 /// # Arguments
 ///
 /// Accepts arguments that [approx::abs_diff_ne] accept.
 /// ```rust
-/// use not_again::dbg_if_abs_diff_ne;
-/// fn f(x: f32) -> f32 {
-///     dbg_if_abs_diff_ne!(x, f32, epsilon = 1.0)
+/// use not_again::{was_ne, abs_diff_ne_args};
+/// fn f(x: f32) -> bool {
+///     was_ne!(x, f32, abs_diff_ne_args!(epsilon = 1.0))
 /// }
-/// f(1.0); // Outputs: [src/lib.rs:58:9] x = 1.0
-/// f(1.5); // No output.
-/// f(2.0); // No output.
-/// f(2.1); // Outputs: [src/lib.rs:58:9] x = 2.1
+/// assert!(f(1.0));
+/// assert!(!f(1.5));
+/// assert!(!f(2.0));
+/// assert!(f(2.1));
 /// ```
 #[cfg(feature = "float")]
 #[macro_export]
-macro_rules! dbg_if_abs_diff_ne {
-    ($val:expr, $type:tt, $($arg:tt)*) => {
-        $crate::dbg_if_ne!($val, $type, |a, b| ::approx::abs_diff_ne!(a, b, $($arg)*))
-    };
-
-    ($val:expr, $type:tt) => {
-        dbg_if_abs_diff_ne!($val, $type,)
+macro_rules! abs_diff_ne_args {
+    ($($arg:tt)*) => {
+        |a, b| ::approx::abs_diff_ne!(a, b, $($arg)*)
     };
 }
 
-/// Calls [std::dbg] if the float argument is not equal to its prior value.
+/// Returns a not equal closure appropriate for the third argument of [`was_ne`]
+/// or [`dbg_if_ne`].
 ///
 /// ```rust
-/// use not_again::dbg_if_ulps_ne;
-/// fn f(x: f32) -> f32 {
-///     dbg_if_ulps_ne!(x, f32) + 0.1
+/// use not_again::{was_ne, relative_ne_args};
+/// fn f(x: f32) -> bool {
+///     was_ne!(x, f32, relative_ne_args!())
 /// }
-/// f(1.0); // Outputs: [src/lib.rs:58:9] x = 1.0
-/// f(1.0); // No output.
-/// f(1.1); // Outputs: [src/lib.rs:58:9] x = 1.1
+/// assert!(f(1.0));
+/// assert!(!f(1.0));
+/// assert!(f(1.1));
+/// ```
+///
+/// # Arguments
+///
+/// Accepts arguments that [approx::relative_ne] accept.
+/// ```rust
+/// use not_again::{was_ne, relative_ne_args};
+/// fn f(x: f32) -> bool {
+///     was_ne!(x, f32, relative_ne_args!(epsilon = 1.0))
+/// }
+/// assert!(f(1.0));
+/// assert!(!f(1.5));
+/// assert!(!f(2.0));
+/// assert!(f(2.1));
+/// ```
+#[cfg(feature = "float")]
+#[macro_export]
+macro_rules! relative_ne_args {
+    ($($arg:tt)*) => {
+        |a, b| ::approx::relative_ne!(a, b, $($arg)*)
+    };
+}
+
+/// Returns a not equal closure appropriate for the third argument of [`was_ne`]
+/// or [`dbg_if_ne`].
+///
+/// ```rust
+/// use not_again::{was_ne, ulps_ne_args};
+/// fn f(x: f32) -> bool {
+///     was_ne!(x, f32, ulps_ne_args!())
+/// }
+/// assert!(f(1.0));
+/// assert!(!f(1.0));
+/// assert!(f(1.1));
 /// ```
 ///
 /// # Arguments
 ///
 /// Accepts arguments that [approx::ulps_ne] accept.
 /// ```rust
-/// use not_again::dbg_if_ulps_ne;
-/// fn f(x: f32) -> f32 {
-///     dbg_if_ulps_ne!(x, f32, epsilon = 1.0, max_ulps = 4)
+/// use not_again::{was_ne, ulps_ne_args};
+/// fn f(x: f32) -> bool {
+///     was_ne!(x, f32, ulps_ne_args!(epsilon = 1.0))
 /// }
-/// f(1.0); // Outputs: [src/lib.rs:58:9] x = 1.0
-/// f(1.5); // No output.
-/// f(2.0); // No output.
-/// f(2.1); // Outputs: [src/lib.rs:58:9] x = 2.1
+/// assert!(f(1.0));
+/// assert!(!f(1.5));
+/// assert!(!f(2.0));
+/// assert!(f(2.1));
 /// ```
 #[cfg(feature = "float")]
 #[macro_export]
-macro_rules! dbg_if_ulps_ne {
-    ($val:expr, $type:tt, $($arg:tt)*) => {
-        $crate::dbg_if_ne!($val, $type, |a, b| ::approx::ulps_ne!(a, b, $($arg)*))
-    };
-
-    ($val:expr, $type:tt) => {
-        dbg_if_ulps_ne!($val, $type,)
+macro_rules! ulps_ne_args {
+    ($($arg:tt)*) => {
+        |a, b| ::approx::ulps_ne!(a, b, $($arg)*)
     };
 }
 

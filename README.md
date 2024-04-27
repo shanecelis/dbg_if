@@ -2,8 +2,8 @@
 
 ![Maintenance](https://img.shields.io/badge/maintenance-actively--developed-brightgreen.svg)
 [![CI](https://github.com/shanecelis/not_again/actions/workflows/rust.yml/badge.svg)](https://github.com/shanecelis/not_again/actions)
-  [![crates-io](https://img.shields.io/crates/v/not_again.svg)](https://crates.io/crates/not_again)
-  [![api-docs](https://docs.rs/not_again/badge.svg)](https://docs.rs/not_again)
+[![crates-io](https://img.shields.io/crates/v/not_again.svg)](https://crates.io/crates/not_again)
+[![api-docs](https://docs.rs/not_again/badge.svg)](https://docs.rs/not_again)
 
 Use `dbg!` in the loop without terminal woes.
 
@@ -24,13 +24,14 @@ The macro [`dbg_if_hash_ne!`](dbg_if_hash_ne) only prints on changed hash values
 
 ### Feature "float"
 
-If the feature "float" is enabled, the macros for floating point arguments are
-[`dbg_if_relative_ne!`](dbg_if_relative_ne),
-[`dbg_if_abs_diff_ne!`](dbg_if_abs_diff_ne),
-[`dbg_if_ulps_ne!`](dbg_if_ulps_ne). It only print its float argument if it is
-considered "not equal" to its prior value within certain tolerances. It uses the
-[`approx`] crate. See [`approx::relative_ne`], [`approx::abs_diff_ne`],
-[`approx::ulps_ne`] for the options of each.
+If the feature "float" is enabled, these macros are available:
+
+- [`relative_ne_args!`](relative_ne_args),
+- [`abs_diff_ne_args!`](abs_diff_ne_args),
+- and [`ulps_ne_args!`](ulps_ne_args). 
+
+These can be given as the third argument to [`was_ne`] or [`dbg_if_ne`]. See the
+[`approx`] crate for the options of each.
 
 ## Example
 
