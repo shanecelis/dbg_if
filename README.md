@@ -78,7 +78,7 @@ f(2.1); // Outputs: [src/lib.rs:42:9] x = 2.1
 
 ## Goals
 
-- Ease debugging introspection without resorting to a debugger.
+- Ease debugging inspection without resorting to a debugger.
 
 ## Motivation
 
