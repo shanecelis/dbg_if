@@ -17,7 +17,7 @@ fn strip_dbg(input: String) -> String {
 
 mod test_output {
     use super::*;
-    use not_again::*;
+    use dbg_if::*;
 
     #[ignore]
     #[test]
@@ -125,7 +125,7 @@ mod test_output {
 mod float_tests {
     use super::*;
     use approx::relative_eq;
-    use not_again::*;
+    use dbg_if::*;
 
     #[test]
     fn test_approx() {
@@ -170,7 +170,7 @@ mod float_tests {
 
     #[test]
     fn test_dbg_if_relative_ne_f32() {
-        use not_again::{dbg_if_ne, relative_ne_args};
+        use dbg_if::{dbg_if_ne, relative_ne_args};
         fn f(x: f32) {
             dbg_if_ne!(x, f32, relative_ne_args!(epsilon = 0.1));
         }
@@ -205,7 +205,7 @@ mod nocapture {
 
     #[test]
     fn test_dbg_if_ne() {
-        use not_again::dbg_if_ne;
+        use dbg_if::dbg_if_ne;
         fn f(x: u8) -> u8 {
             dbg_if_ne!(x, u8) + 1
         }
@@ -214,7 +214,7 @@ mod nocapture {
     }
     #[test]
     fn test_dbg_if_hash_ne() {
-        use not_again::dbg_if_hash_ne;
+        use dbg_if::dbg_if_hash_ne;
         let mut s: String = "hello".into();
         fn f(x: &mut String) {
             dbg_if_hash_ne!(x);
@@ -227,7 +227,7 @@ mod nocapture {
 
     #[test]
     fn test_dbg_if_ne_closure() {
-        use not_again::dbg_if_ne;
+        use dbg_if::dbg_if_ne;
         for i in 0..=20 {
             dbg_if_ne!(i, i8, |last_value: i8, new_value: i8| (new_value
                 - last_value)
@@ -244,7 +244,7 @@ mod nocapture {
 
         #[test]
         fn test_dbg_if_relative_ne() {
-            use not_again::{dbg_if_ne, relative_ne_args};
+            use dbg_if::{dbg_if_ne, relative_ne_args};
             fn f(x: f32) -> f32 {
                 dbg_if_ne!(x, f32, relative_ne_args!()) + 0.1
             }
@@ -255,7 +255,7 @@ mod nocapture {
 
         #[test]
         fn test_dbg_if_relative_ne_with_args() {
-            use not_again::{dbg_if_ne, relative_ne_args};
+            use dbg_if::{dbg_if_ne, relative_ne_args};
             fn f(x: f32) -> f32 {
                 dbg_if_ne!(x, f32, relative_ne_args!(epsilon = 1.0, max_relative = 0.5))
             }
@@ -267,7 +267,7 @@ mod nocapture {
 
         #[test]
         fn test_dbg_if_abs_diff_ne() {
-            use not_again::{dbg_if_ne, abs_diff_ne_args};
+            use dbg_if::{dbg_if_ne, abs_diff_ne_args};
             fn f(x: f32) -> f32 {
                 dbg_if_ne!(x, f32, abs_diff_ne_args!()) + 0.1
             }
@@ -278,7 +278,7 @@ mod nocapture {
 
         #[test]
         fn test_dbg_if_abs_diff_ne_with_args() {
-            use not_again::{dbg_if_ne, abs_diff_ne_args};
+            use dbg_if::{dbg_if_ne, abs_diff_ne_args};
             fn f(x: f32) -> f32 {
                 dbg_if_ne!(x, f32, abs_diff_ne_args!(epsilon = 1.0))
             }
@@ -290,7 +290,7 @@ mod nocapture {
 
         #[test]
         fn test_dbg_if_ulps_ne() {
-            use not_again::{dbg_if_ne, ulps_ne_args};
+            use dbg_if::{dbg_if_ne, ulps_ne_args};
             fn f(x: f32) -> f32 {
                 dbg_if_ne!(x, f32, ulps_ne_args!()) + 0.1
             }
@@ -301,7 +301,7 @@ mod nocapture {
 
         #[test]
         fn test_dbg_if_ulps_ne_with_args() {
-            use not_again::{dbg_if_ne, ulps_ne_args};
+            use dbg_if::{dbg_if_ne, ulps_ne_args};
             fn f(x: f32) -> f32 {
                 dbg_if_ne!(x, f32, ulps_ne_args!(epsilon = 1.0, max_ulps = 4))
             }

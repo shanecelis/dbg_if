@@ -1,9 +1,9 @@
-# not_again
+# dbg_if
 
 ![Maintenance](https://img.shields.io/badge/maintenance-actively--developed-brightgreen.svg)
-[![CI](https://github.com/shanecelis/not_again/actions/workflows/rust.yml/badge.svg)](https://github.com/shanecelis/not_again/actions)
-[![crates-io](https://img.shields.io/crates/v/not_again.svg)](https://crates.io/crates/not_again)
-[![api-docs](https://docs.rs/not_again/badge.svg)](https://docs.rs/not_again)
+[![CI](https://github.com/shanecelis/dbg_if/actions/workflows/rust.yml/badge.svg)](https://github.com/shanecelis/dbg_if/actions)
+[![crates-io](https://img.shields.io/crates/v/dbg_if.svg)](https://crates.io/crates/dbg_if)
+[![api-docs](https://docs.rs/dbg_if/badge.svg)](https://docs.rs/dbg_if)
 
 `dbg!` in the loop without terminal woes.
 
@@ -12,7 +12,7 @@
 The macro [`dbg_once!`] only prints its value the first time.
 
 ```rust
-use not_again::dbg_once;
+use dbg_if::dbg_once;
 for i in 0..10 {
     dbg_once!(i); // Outputs: [src/lib.rs:9:9] x = 0
 }
@@ -21,7 +21,7 @@ for i in 0..10 {
 The macro [`dbg_if_ne!`] only prints changed values.
 
 ```rust
-use not_again::dbg_if_ne;
+use dbg_if::dbg_if_ne;
 fn f(x: u8) -> u8 {
     dbg_if_ne!(x, u8)
 }
@@ -33,7 +33,7 @@ f(2); // Outputs: [src/lib.rs:58:9] x = 2
 The macro [`dbg_if_hash_ne!`] only prints on changed hash values.
 
 ```rust
-use not_again::dbg_if_hash_ne;
+use dbg_if::dbg_if_hash_ne;
 let mut s: String = "hello".into();
 fn f(x: &str) -> &str {
     dbg_if_hash_ne!(x)
@@ -61,7 +61,7 @@ the [`approx`] crate for more details.
 ```rust
 #[cfg(feature = "float")]
 {
-use not_again::{dbg_if_ne, abs_diff_ne_args};
+use dbg_if::{dbg_if_ne, abs_diff_ne_args};
 fn f(x: f32) -> f32 {
     dbg_if_ne!(x, f32, abs_diff_ne_args!(epsilon = 1.0))
 }
@@ -118,7 +118,7 @@ variable&mdash;and instead of spamming the terminal with the same information, l
 only emit information when it has changed with [`dbg_if_ne!`].
 
 ```rust
-use not_again::dbg_if_ne;
+use dbg_if::dbg_if_ne;
 fn f(x: u8) -> u8 {
     let mut accum = 0;
     for i in 0..5 {
@@ -162,5 +162,5 @@ Thank you to [Philipp Oppermann](https://github.com/phil-opp) for his crate
 [`once`](https://github.com/phil-opp/rust-once). I initially thought I'd only
 write `dbg_once!` and submit a PR. But once I got going I realized `dbg_if_ne!`
 would be useful too and these are all require `std`; `once` is a `no_std` crate.
-So `not_again` is inspired and informed by `once` but it actually doesn't share
+So `dbg_if` is inspired and informed by `once` but it actually doesn't share
 any code with `once`.

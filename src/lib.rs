@@ -1,4 +1,4 @@
-#![doc(html_root_url = "https://docs.rs/not_again/0.2.3")]
+#![doc(html_root_url = "https://docs.rs/dbg_if/0.2.3")]
 #![doc = include_str!("../README.md")]
 #![forbid(missing_docs)]
 
@@ -6,7 +6,7 @@
 ///
 /// ```rust
 /// fn f() -> bool {
-///     not_again::once!()
+///     dbg_if::once!()
 /// }
 /// assert!(f());
 /// assert!(!f());
@@ -18,7 +18,7 @@
 /// cases because those are two different call sites.
 ///
 /// ```rust
-/// use not_again::once;
+/// use dbg_if::once;
 /// assert!(once!()); // Returns true.
 /// assert!(once!()); // Returns true too.
 /// ```
@@ -37,7 +37,7 @@ macro_rules! once {
 /// Calls [`std::dbg`] exactly once per call site.
 ///
 /// ```rust
-/// use not_again::dbg_once;
+/// use dbg_if::dbg_once;
 /// for i in 0..10 {
 ///     dbg_once!(i); // Outputs: [src/lib.rs:9:9] x = 0
 /// }
@@ -58,7 +58,7 @@ macro_rules! dbg_once {
 /// Returns true if the given expression is not equal to what it was.
 ///
 /// ```rust
-/// use not_again::was_ne;
+/// use dbg_if::was_ne;
 /// fn f(x: u8) -> bool {
 ///     was_ne!(x, u8)
 /// }
@@ -75,7 +75,7 @@ macro_rules! dbg_once {
 /// `ne` with this signature: `FnMut<T>(T, T) -> bool`.
 ///
 /// ```rust
-/// use not_again::was_ne;
+/// use dbg_if::was_ne;
 /// fn f(x: i8) -> bool {
 ///     was_ne!(x, i8,
 ///         |last_value: i8, new_value: i8|
@@ -111,7 +111,7 @@ macro_rules! was_ne {
 /// Calls [`std::dbg`] if the argument is not equal to its prior value.
 ///
 /// ```rust
-/// use not_again::dbg_if_ne;
+/// use dbg_if::dbg_if_ne;
 /// fn f(x: u8) -> u8 {
 ///     dbg_if_ne!(x, u8) + 1
 /// }
@@ -126,7 +126,7 @@ macro_rules! was_ne {
 /// `ne` with this signature: `FnMut<T>(T, T) -> bool`.
 ///
 /// ```rust
-/// use not_again::dbg_if_ne;
+/// use dbg_if::dbg_if_ne;
 /// for i in 0..=20 {
 ///     dbg_if_ne!(i, i8,
 ///         |last_value: i8, new_value: i8|
@@ -165,7 +165,7 @@ macro_rules! dbg_if_ne {
 /// Returns true if the given expression's hash is not equal to what it was.
 ///
 /// ```rust
-/// use not_again::was_hash_ne;
+/// use dbg_if::was_hash_ne;
 /// let mut s: String = "hello".into();
 /// fn f(x: &str) -> bool {
 ///     was_hash_ne!(x)
@@ -195,7 +195,7 @@ macro_rules! was_hash_ne {
 /// Calls [`std::dbg`] if the argument's hash is not equal to its prior value.
 ///
 /// ```rust
-/// use not_again::dbg_if_hash_ne;
+/// use dbg_if::dbg_if_hash_ne;
 /// let mut s: String = "hello".into();
 /// fn f(x: &mut String) {
 ///     dbg_if_hash_ne!(x);
@@ -234,7 +234,7 @@ macro_rules! dbg_if_hash_ne {
 /// or [`dbg_if_ne`].
 ///
 /// ```rust
-/// use not_again::{was_ne, abs_diff_ne_args};
+/// use dbg_if::{was_ne, abs_diff_ne_args};
 /// fn f(x: f32) -> bool {
 ///     was_ne!(x, f32, abs_diff_ne_args!())
 /// }
@@ -247,7 +247,7 @@ macro_rules! dbg_if_hash_ne {
 ///
 /// Accepts arguments that [approx::abs_diff_ne] accept.
 /// ```rust
-/// use not_again::{was_ne, abs_diff_ne_args};
+/// use dbg_if::{was_ne, abs_diff_ne_args};
 /// fn f(x: f32) -> bool {
 ///     was_ne!(x, f32, abs_diff_ne_args!(epsilon = 1.0))
 /// }
@@ -268,7 +268,7 @@ macro_rules! abs_diff_ne_args {
 /// or [`dbg_if_ne`].
 ///
 /// ```rust
-/// use not_again::{was_ne, relative_ne_args};
+/// use dbg_if::{was_ne, relative_ne_args};
 /// fn f(x: f32) -> bool {
 ///     was_ne!(x, f32, relative_ne_args!())
 /// }
@@ -281,7 +281,7 @@ macro_rules! abs_diff_ne_args {
 ///
 /// Accepts arguments that [approx::relative_ne] accept.
 /// ```rust
-/// use not_again::{was_ne, relative_ne_args};
+/// use dbg_if::{was_ne, relative_ne_args};
 /// fn f(x: f32) -> bool {
 ///     was_ne!(x, f32, relative_ne_args!(epsilon = 1.0))
 /// }
@@ -302,7 +302,7 @@ macro_rules! relative_ne_args {
 /// or [`dbg_if_ne`].
 ///
 /// ```rust
-/// use not_again::{was_ne, ulps_ne_args};
+/// use dbg_if::{was_ne, ulps_ne_args};
 /// fn f(x: f32) -> bool {
 ///     was_ne!(x, f32, ulps_ne_args!())
 /// }
@@ -315,7 +315,7 @@ macro_rules! relative_ne_args {
 ///
 /// Accepts arguments that [approx::ulps_ne] accept.
 /// ```rust
-/// use not_again::{was_ne, ulps_ne_args};
+/// use dbg_if::{was_ne, ulps_ne_args};
 /// fn f(x: f32) -> bool {
 ///     was_ne!(x, f32, ulps_ne_args!(epsilon = 1.0))
 /// }
@@ -391,7 +391,7 @@ macro_rules! static_atomic_float {
 macro_rules! static_atomic_float {
     ($name:ident: $type:tt) => {
         compile_error!(
-            "Feature \"float\" must be enabled on \"not_again\" crate to use atomic floats."
+            "Feature \"float\" must be enabled on \"dbg_if\" crate to use atomic floats."
         );
     };
 }
