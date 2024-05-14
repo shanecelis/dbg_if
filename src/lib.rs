@@ -180,12 +180,19 @@ macro_rules! was_hash_ne {
     ($val:expr $(,)?) => {
         match $val {
             tmp => {
-                use ::core::{hash::{Hash, Hasher}, sync::atomic::{AtomicU64, Ordering}};
+                use ::core::{
+                    hash::{Hash, Hasher},
+                    sync::atomic::{AtomicU64, Ordering},
+                };
                 static HASH: AtomicU64 = AtomicU64::new(0);
                 let mut s = ::std::hash::DefaultHasher::new();
                 tmp.hash(&mut s);
                 let current_hash = s.finish();
-                let changed = HASH.fetch_update(Ordering::SeqCst, Ordering::SeqCst, |h| (h != current_hash).then_some(current_hash)).is_ok();
+                let changed = HASH
+                    .fetch_update(Ordering::SeqCst, Ordering::SeqCst, |h| {
+                        (h != current_hash).then_some(current_hash)
+                    })
+                    .is_ok();
                 changed
             }
         }

@@ -267,7 +267,7 @@ mod nocapture {
 
         #[test]
         fn test_dbg_if_abs_diff_ne() {
-            use dbg_if::{dbg_if_ne, abs_diff_ne_args};
+            use dbg_if::{abs_diff_ne_args, dbg_if_ne};
             fn f(x: f32) -> f32 {
                 dbg_if_ne!(x, f32, abs_diff_ne_args!()) + 0.1
             }
@@ -278,7 +278,7 @@ mod nocapture {
 
         #[test]
         fn test_dbg_if_abs_diff_ne_with_args() {
-            use dbg_if::{dbg_if_ne, abs_diff_ne_args};
+            use dbg_if::{abs_diff_ne_args, dbg_if_ne};
             fn f(x: f32) -> f32 {
                 dbg_if_ne!(x, f32, abs_diff_ne_args!(epsilon = 1.0))
             }
