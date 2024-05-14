@@ -162,8 +162,7 @@ macro_rules! dbg_if_ne {
     };
 }
 
-/// Returns true if its the first call or the given expression's hash is not equal to
-/// what it was.
+/// Returns true if the given expression's hash is not equal to what it was.
 ///
 /// ```rust
 /// use not_again::was_hash_ne;

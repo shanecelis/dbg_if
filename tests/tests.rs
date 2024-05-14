@@ -15,10 +15,11 @@ fn strip_dbg(input: String) -> String {
     r.replace_all(input.trim(), "").to_string()
 }
 
-mod test_dbg {
+mod test_output {
     use super::*;
     use not_again::*;
 
+    #[ignore]
     #[test]
     fn test_run_once() {
         fn f() {
@@ -30,6 +31,7 @@ mod test_dbg {
         assert_eq!(&output[..], "\"hi\" = \"hi\"");
     }
 
+    #[ignore]
     #[test]
     fn test_dbg_once() {
         fn f() {
@@ -42,6 +44,7 @@ mod test_dbg {
         assert_eq!(&output[..], "\"hi\" = \"hi\"");
     }
 
+    #[ignore]
     #[test]
     fn test_dbg_if_hash_ne() {
         fn f(x: usize) {
@@ -55,6 +58,7 @@ mod test_dbg {
         assert_eq!(&output[..], "x = 1\nx = 2");
     }
 
+    #[ignore]
     #[test]
     fn test_dbg_if_hash_ne_multiple() {
         fn f(x: usize, y: u64) {
@@ -68,6 +72,7 @@ mod test_dbg {
         assert_eq!(&output[..], "x = 1\ny = 3\nx = 2");
     }
 
+    #[ignore]
     #[test]
     fn test_dbg_if_hash_ne_eval_once() {
         fn f(x: &mut usize) {
@@ -84,6 +89,7 @@ mod test_dbg {
         assert_eq!(&output[..], "{ *x += 1; *x } = 1");
     }
 
+    #[ignore]
     #[test]
     fn test_dbg_if_ne() {
         fn f(x: isize) {
@@ -100,6 +106,7 @@ mod test_dbg {
         assert_eq!(&output[..], "x = 1\nx = 2");
     }
 
+    #[ignore]
     #[test]
     fn test_pass_thru() {
         fn a() {

@@ -7,13 +7,6 @@
 
 `dbg!` in the loop without terminal woes.
 
-> ♫ Here I go again on my own,  
-> using print statements is all I've ever known,  
-> like a drifter I was born to debug alone,  
-> but I've made up my mind.   
-> I ain't wasting no more time.  
-> Here I go `not_again` on my code. ♫
-
 ## Summary
 
 The macro [`dbg_once!`] only prints its value the first time.
@@ -66,6 +59,8 @@ These can be given as the third argument to [`was_ne!`] or [`dbg_if_ne!`]. See
 the [`approx`] crate for more details.
 
 ```rust
+#[cfg(feature = "float")]
+{
 use not_again::{dbg_if_ne, abs_diff_ne_args};
 fn f(x: f32) -> f32 {
     dbg_if_ne!(x, f32, abs_diff_ne_args!(epsilon = 1.0))
@@ -74,6 +69,7 @@ f(1.0); // Outputs: [src/lib.rs:42:9] x = 1.0
 f(1.5); // No output.
 f(2.0); // No output.
 f(2.1); // Outputs: [src/lib.rs:42:9] x = 2.1
+}
 ```
 
 ## Goals
@@ -105,21 +101,20 @@ fn f(x: u8) -> u8 {
 }
 ```
 
-```ignore
+```text
 [src/main.rs:59:18] x = 1 
 [src/main.rs:59:18] x = 1 
 [src/main.rs:59:18] x = 1 
 ...^C
 ```
 
-For code in tight loops, however, `dbg!` does leave something to be desired. Your
-terminal will scream, "x = 1" at you again and again until you say, "No, not
-again."
+For code in tight loops, however, `dbg!` leaves something to be desired. The
+terminal screams, "x = 1" again and again. There has got to be a better way.
 
 ### Can We Do Better?
 
-Yes! Let's take note of the value at the call site---with a static atomic
-variable---and instead of spamming the terminal with the same information, let's
+Yes! Let's take note of the value at the call site&mdash;with a static atomic
+variable&mdash;and instead of spamming the terminal with the same information, let's
 only emit information when it has changed with [`dbg_if_ne!`].
 
 ```rust
@@ -138,6 +133,15 @@ f(1); // Outputs: [src/main.rs:59:18] x = 1
 
 That's fine. Can they be hashed? Because hashes can be stored in an `AtomicU64`
 at the call site. Just use [`dbg_if_hash_ne!`].
+
+## Tests
+
+Some tests require a particular setup in order to run successfully. A couple of
+aliases have been placed in `.cargo/config.toml` to run these tests.
+
+- `cargo test` runs the `was*` tests.
+- `cargo test-output` runs above and the `dbg*` tests which tests its output, requires `--nocapture` and single threaded execution.
+- `cargo test-all` runs above and the float features.
 
 ## License
 
