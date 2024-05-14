@@ -1,4 +1,4 @@
-#![doc(html_root_url = "https://docs.rs/dbg_if/0.2.3")]
+#![doc(html_root_url = "https://docs.rs/dbg_if/0.1.0")]
 #![doc = include_str!("../README.md")]
 #![forbid(missing_docs)]
 
