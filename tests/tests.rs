@@ -129,7 +129,7 @@ mod test_output_dbg_if {
     #[test]
     fn test_run_once() {
         fn f() {
-            dbg!("hi", Call::Once);
+            dbg!("hi", Once);
         }
         let output = strip_dbg(capture_stderr(|| {
             f();
@@ -141,7 +141,7 @@ mod test_output_dbg_if {
     #[test]
     fn test_dbg_once() {
         fn f() {
-            dbg!("hi", Call::Once);
+            dbg!("hi", Once);
         }
         let output = strip_dbg(capture_stderr(|| {
             f();
@@ -154,7 +154,7 @@ mod test_output_dbg_if {
     #[test]
     fn test_dbg_if_hash_ne() {
         fn f(x: usize) {
-            dbg!(x, Call::IfHashNe);
+            dbg!(x, IfHashNe);
         }
 
         let output = strip_dbg(capture_stderr(|| {
@@ -185,7 +185,7 @@ mod test_output_dbg_if {
             dbg!({
                 *x += 1;
                 *x
-            }, Call::IfHashNe);
+            }, IfHashNe);
         }
 
         let output = strip_dbg(capture_stderr(|| {
@@ -199,7 +199,7 @@ mod test_output_dbg_if {
     #[test]
     fn test_dbg_if_ne() {
         fn f(x: isize) {
-            dbg!(x, Call::IfNotEqual, isize);
+            dbg!(x, IfNe, isize);
         }
 
         let output = strip_dbg(capture_stderr(|| {
@@ -216,7 +216,7 @@ mod test_output_dbg_if {
     #[test]
     fn test_pass_thru() {
         fn a() {
-            let _x: usize = dbg!(1, Call::Once);
+            let _x: usize = dbg!(1, Once);
         }
 
         let output = strip_dbg(capture_stderr(|| {

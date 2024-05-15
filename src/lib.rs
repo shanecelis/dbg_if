@@ -2,46 +2,62 @@
 #![doc = include_str!("../README.md")]
 #![forbid(missing_docs)]
 
-/// Specify call type for [dbg_if].
-#[allow(dead_code)]
-enum Call {
-    Every,
-    Once,
-    IfNe,
-    IfHashNe,
-}
-
-/// A drop in replacement for [dbg](std::dbg)!
+/// A kind of drop in replacement for [dbg](std::dbg)!
+///
+/// This is a facade for the rest of the macros that key off the second argument
+/// if present.
 ///
 /// ```rust
 /// use dbg_if::dbg_if as dbg;
 /// let mut x: u8 = 0;
-/// dbg!(x + 1);
+/// fn f(x: u8) -> u8 {
+///     dbg!(x + 1);
+///     dbg!(x + 2, Once);
+///     dbg!(x + 3, IfNe, u8);
+///     dbg!(x + 4, IfHashNe)
+/// }
+///
+/// x = f(x);
+/// x = f(x);
 /// ```
+///
+/// Running the above will produce the following output.
+///
+/// ```text
+/// [src/lib.rs:10:9] x + 1 = 1
+/// [src/lib.rs:11:9] x + 2 = 2
+/// [src/lib.rs:12:9] x + 3 = 3
+/// [src/lib.rs:13:9] x + 4 = 4
+/// [src/lib.rs:10:9] x + 1 = 1 // Only the first statement will print again.
+/// ````
 #[macro_export]
 macro_rules! dbg_if {
     ($val:expr) => {
         ::std::dbg!($val)
     };
 
-    ($val:expr, Call::Every) => {
+    ($val:expr, Every) => {
         ::std::dbg!($val)
     };
 
-    ($val:expr, Call::Once) => {
+    ($val:expr, Once) => {
         ::dbg_if::dbg_once!($val)
     };
 
-    ($val:expr, Call::IfNe, $type:tt) => {
+    ($val:expr, IfNe, $type:tt) => {
         ::dbg_if::dbg_if_ne!($val, $type)
     };
 
-    ($val:expr, Call::IfNe, $type:tt, $ne:expr) => {
+    ($val:expr, IfNe, $type:tt, $ne:expr) => {
         ::dbg_if::dbg_if_ne!($val, $type, $ne)
     };
 
-    ($val:expr, Call::IfHashNe, $ne:expr) => {
+    ($val:expr, IfHashNe) => {
         ::dbg_if::dbg_if_hash_ne!($val)
+    };
+
+    ($val:expr, IfHashNe, $ne:expr) => {
+        ::dbg_if::dbg_if_hash_ne!($val, $ne)
     };
 }
 
