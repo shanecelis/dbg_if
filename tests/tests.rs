@@ -121,6 +121,112 @@ mod test_output {
     }
 }
 
+mod test_output_dbg_if {
+    use super::*;
+    use dbg_if::dbg_if as dbg;
+
+    #[ignore]
+    #[test]
+    fn test_run_once() {
+        fn f() {
+            dbg!("hi", Call::Once);
+        }
+        let output = strip_dbg(capture_stderr(|| {
+            f();
+        }));
+        assert_eq!(&output[..], "\"hi\" = \"hi\"");
+    }
+
+    #[ignore]
+    #[test]
+    fn test_dbg_once() {
+        fn f() {
+            dbg!("hi", Call::Once);
+        }
+        let output = strip_dbg(capture_stderr(|| {
+            f();
+            f();
+        }));
+        assert_eq!(&output[..], "\"hi\" = \"hi\"");
+    }
+
+    #[ignore]
+    #[test]
+    fn test_dbg_if_hash_ne() {
+        fn f(x: usize) {
+            dbg!(x, Call::IfHashNe);
+        }
+
+        let output = strip_dbg(capture_stderr(|| {
+            f(1);
+            f(2);
+        }));
+        assert_eq!(&output[..], "x = 1\nx = 2");
+    }
+
+    // #[ignore]
+    // #[test]
+    // fn test_dbg_if_hash_ne_multiple() {
+    //     fn f(x: usize, y: u64) {
+    //         dbg_if_hash_ne!(x, y);
+    //     }
+
+    //     let output = strip_dbg(capture_stderr(|| {
+    //         f(1, 3);
+    //         f(2, 3);
+    //     }));
+    //     assert_eq!(&output[..], "x = 1\ny = 3\nx = 2");
+    // }
+
+    #[ignore]
+    #[test]
+    fn test_dbg_if_hash_ne_eval_once() {
+        fn f(x: &mut usize) {
+            dbg!({
+                *x += 1;
+                *x
+            }, Call::IfHashNe);
+        }
+
+        let output = strip_dbg(capture_stderr(|| {
+            let mut x: usize = 0;
+            f(&mut x);
+        }));
+        assert_eq!(&output[..], "{ *x += 1; *x } = 1");
+    }
+
+    #[ignore]
+    #[test]
+    fn test_dbg_if_ne() {
+        fn f(x: isize) {
+            dbg!(x, Call::IfNotEqual, isize);
+        }
+
+        let output = strip_dbg(capture_stderr(|| {
+            let mut x: isize = 1;
+            f(x);
+            f(x);
+            x += 1;
+            f(x);
+        }));
+        assert_eq!(&output[..], "x = 1\nx = 2");
+    }
+
+    #[ignore]
+    #[test]
+    fn test_pass_thru() {
+        fn a() {
+            let _x: usize = dbg!(1, Call::Once);
+        }
+
+        let output = strip_dbg(capture_stderr(|| {
+            a();
+            a();
+        }));
+        assert_eq!(&output[..], "1 = 1");
+    }
+}
+
 #[cfg(feature = "float")]
 mod float_tests {
     use super::*;

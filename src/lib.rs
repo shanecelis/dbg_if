@@ -2,6 +2,50 @@
 #![doc = include_str!("../README.md")]
 #![forbid(missing_docs)]
 
+/// Specify call type for [dbg_if].
+#[allow(dead_code)]
+enum Call {
+    Every,
+    Once,
+    IfNe,
+    IfHashNe,
+}
+
+/// A drop in replacement for [dbg](std::dbg)!
+///
+/// ```rust
+/// use dbg_if::dbg_if as dbg;
+/// let mut x: u8 = 0;
+/// dbg!(x + 1);
+/// ```
+#[macro_export]
+macro_rules! dbg_if {
+    ($val:expr) => {
+        ::std::dbg!($val)
+    };
+
+    ($val:expr, Call::Every) => {
+        ::std::dbg!($val)
+    };
+
+    ($val:expr, Call::Once) => {
+        ::dbg_if::dbg_once!($val)
+    };
+
+    ($val:expr, Call::IfNe, $type:tt) => {
+        ::dbg_if::dbg_if_ne!($val, $type)
+    };
+
+    ($val:expr, Call::IfNe, $type:tt, $ne:expr) => {
+        ::dbg_if::dbg_if_ne!($val, $type, $ne)
+    };
+
+    ($val:expr, Call::IfHashNe, $ne:expr) => {
+        ::dbg_if::dbg_if_hash_ne!($val)
+    };
+}
+
+
 /// Returns true once per call site.
 ///
 /// ```rust
