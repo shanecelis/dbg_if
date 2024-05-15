@@ -47,6 +47,30 @@ f(&s); // Outputs: [src/lib.rs:37:9] x = "hello!"
 The sister macros [`once!`], [`was_ne!`], and [`was_hash_ne!`] return true instead
 of printing.
 
+Finally the macro [`dbg_if`] provides a kind of drop-in replacment for
+[`dbg`](std::dbg) if that is your preference.
+
+```rust
+use dbg_if::dbg_if as dbg;
+let mut x: u8 = 0;
+fn f(x: u8) -> u8 {
+    dbg!(x + 1);
+    dbg!(x + 2, Once);
+    dbg!(x + 3, IfNe, u8);
+    dbg!(x + 4, IfHashNe)
+}
+
+x = f(x); 
+// Outputs:
+// [src/lib.rs:10:9] x + 1 = 1
+// [src/lib.rs:11:9] x + 2 = 2
+// [src/lib.rs:12:9] x + 3 = 3
+// [src/lib.rs:13:9] x + 4 = 4
+x = f(x); 
+// Outputs:
+// [src/lib.rs:10:9] x + 1 = 1
+```
+
 ### Feature "float"
 
 If the feature "float" is enabled, these macros are available:
@@ -140,8 +164,13 @@ Some tests require a particular setup in order to run successfully. A couple of
 aliases have been placed in `.cargo/config.toml` to run these tests.
 
 - `cargo test` runs the `was*` tests.
-- `cargo test-output` runs above and the `dbg*` tests which tests its output, requires `--nocapture` and single threaded execution.
+- `cargo test-output` runs above and the `dbg*` tests which verify its output on
+  stdout.
 - `cargo test-all` runs above and the float features.
+
+If you see errors that say, "Redirect already exists," that's because some tests
+check the stdout and cannot be run multi-threaded. Use `cargo test-output` to
+run them with the right arguments.
 
 ## License
 
