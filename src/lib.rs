@@ -61,7 +61,6 @@ macro_rules! dbg_if {
     };
 }
 
-
 /// Returns true once per call site.
 ///
 /// ```rust

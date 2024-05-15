@@ -182,10 +182,13 @@ mod test_output_dbg_if {
     #[test]
     fn test_dbg_if_hash_ne_eval_once() {
         fn f(x: &mut usize) {
-            dbg!({
-                *x += 1;
-                *x
-            }, IfHashNe);
+            dbg!(
+                {
+                    *x += 1;
+                    *x
+                },
+                IfHashNe
+            );
         }
 
         let output = strip_dbg(capture_stderr(|| {
