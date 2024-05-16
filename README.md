@@ -1,7 +1,7 @@
 # dbg_if
 
 ![Maintenance](https://img.shields.io/badge/maintenance-actively--developed-brightgreen.svg)
-[![CI](https://github.com/shanecelis/dbg_if/actions/workflows/rust.yml/badge.svg)](https://github.com/shanecelis/dbg_if/actions)
+[![CI](https://github.com/shanecelis/dbg_if/actions/workflows/ci.yml/badge.svg)](https://github.com/shanecelis/dbg_if/actions)
 [![crates-io](https://img.shields.io/crates/v/dbg_if.svg)](https://crates.io/crates/dbg_if)
 [![api-docs](https://docs.rs/dbg_if/badge.svg)](https://docs.rs/dbg_if)
 
