@@ -1,6 +1,6 @@
 [package]
 name = "dbg_if"
-version = "0.1.0-alpha.2"
+version = "0.1.0"
 authors = ["Shane Celis <shane.celis@gmail.com>"]
 license = "MIT OR Apache-2.0"
 description = "Use dbg! in the loop without terminal woes."
