@@ -36,7 +36,7 @@ jobs:
       - name: Set up Rust
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: $stable
+          toolchain: stable
           profile: minimal
           override: true
       - name: Build
