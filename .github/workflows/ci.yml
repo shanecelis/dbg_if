@@ -24,7 +24,7 @@ jobs:
       - name: Build
         run: cargo build --all-targets --no-default-features
       - name: Test
-        run: cargo test-output --no-default-features
+        run: cargo test-output
       - name: Doc
         run: cargo doc --no-default-features
 
@@ -42,6 +42,6 @@ jobs:
       - name: Build
         run: cargo build --all-targets --all-features
       - name: Test
-        run: cargo test-all --all-features
+        run: cargo test-all
       - name: Doc
         run: cargo doc --all-features
